@@ -6,9 +6,9 @@ import os
 
 # need the name of root of the pic and lib directories
 # they also have fonts under fonts under picdir
-picdir = "epaperws/pic"
+picdir = "./epaperws/pic"
 #picdir = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'pic')
-libdir = "epaperws/lib"
+libdir = "./epaperws/lib"
 #libdir = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'lib')
 if os.path.exists(libdir):
     sys.path.append(libdir)
@@ -41,24 +41,24 @@ winddirurl = winddomain + "daywinddir.png"
 
 def loadWind ():
     r = requests.get(windurl, allow_redirects=True)
-    open('daywind-copy.png', 'wb').write(r.content)
+    open('./tmp/daywind-copy.png', 'wb').write(r.content)
 
     r2 = requests.get(winddirurl, allow_redirects=True)
-    open('daywinddir-copy.png', 'wb').write(r2.content)
+    open('./tmp/daywinddir-copy.png', 'wb').write(r2.content)
 
-    file_in = "daywind"
+    file_in = "./tmp/daywind"
     img = Image.open(file_in + "-copy.png")
     img2 = img.convert("1")
     img2.save(file_in + ".bmp")
 
-    file_in = "daywinddir"
+    file_in = "./tmp/daywinddir"
     img = Image.open(file_in + "-copy.png")
     img2 = img.convert("1")
     img2.save(file_in + ".bmp")
 
     # end
 
-ranelaghlogo = "ranelagh-253x47"
+ranelaghlogo = "./tmp/ranelagh-253x47"
 # function to convert logo
 def ranelaghLogo():
 
@@ -264,8 +264,8 @@ try:
         draw = ImageDraw.Draw(Himage2)
         draw.text((10, 0), 'Club Wind', font = font36, fill = 0)
 
-        bmp = Image.open("daywind.bmp")
-        bmp2 = Image.open("daywinddir.bmp")
+        bmp = Image.open("./tmp/daywind.bmp")
+        bmp2 = Image.open("./tmp/daywinddir.bmp")
         bmp3 = Image.open(ranelaghlogo + ".bmp")
         # these image are 300 x 180 by default - gap 10 pixels
         Himage2.paste(bmp, (10, 46))
