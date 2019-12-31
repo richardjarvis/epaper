@@ -275,7 +275,9 @@ try:
 
     epd = epd7in5_V2.EPD()
 
-    # currently loops 3 times & sleeps 3
+    # for one run
+    oneRun = 1
+
     #while (True):
     for loops in range(1):
 
@@ -459,8 +461,11 @@ try:
 
         # and finally the tides!
         tiderow = 236 + 36 + 6 * 18
-        draw.text((Column2, tiderow), "Tides (thamestides)", font = font28, fill = 0)
-        tidestr = ""
+        draw.text((Column2, tiderow), "Tides", font = font28, fill = 0)
+        dw, h = draw.textsize("Tides", font=font28)
+        draw.text((Column2 + dw + 14, tiderow + 28 - 14), "(via thamestides)", font = font14, fill = 0)
+        tidestr1 = ""
+        tidestr2 = ""
         for row in range (0, 4): # 4 rows
             #for col in range (0, 3): # 5 cols but we only want 0 - 3
                 #print (prtides[row][col])
@@ -468,14 +473,30 @@ try:
                     #tidestr = tidestr + prtides[row][col] + " "
                 # end if
             # end for
-            # if there are tidal time?, if so then process
-            if (len(prtides[row][1]) > 0):
-                tidestr = tidestr + prtides[row][0] + ": " \
-                        + prtides[row][1] + " " + prtides[row][2] + "m, "
+            # is there a tide time?, if so then process
+            if (row == 0 or row == 1):
+                if (len(prtides[row][1]) > 0):
+                    tidestr1 = tidestr1 + prtides[row][0] + ": " \
+                        + prtides[row][1] + " " + prtides[row][2] + "m"
+                    if (row == 0):
+                        tidestr1 = tidestr1 + ", "
+            if (row == 2 or row == 3):
+                if (len(prtides[row][1]) > 0):
+                    tidestr2 = tidestr2 + prtides[row][0] + ": " \
+                        + prtides[row][1] + " " + prtides[row][2] + "m"
+                    if (row == 2):
+                        tidestr2 = tidestr2 + ", "
+
+                #if (row != 3):
+                    #tidestr = tidestr + ", "
                 #tidestr = tidestr + ", "
         # end for
-        draw.text((Column2, tiderow + 32), tidestr, font = font14, fill = 0)
+        draw.text((Column2, tiderow + 32), tidestr1, font = font16, fill = 0)
+        draw.text((Column2, tiderow + 32 + 18), tidestr2, font = font16, fill = 0)
 
+        # save a copy of the image
+        if (oneRun == 1):
+            Himage2.save("screen.bmp")
 
         # display and then sleep
         epd.display(epd.getbuffer(Himage2))
