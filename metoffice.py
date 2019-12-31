@@ -1,14 +1,12 @@
 #
+# test sample met office code - need to convert to request()
 #
-#
 
 
-#test sample met office code - need to convert to request()
-
-import os
+import os   # for environ()
 import requests
-import geojson
-import http.client
+import geojson  # the structure for the data
+import http.client  # redundant as using requests
 
 # retrieve the access keys from the environment
 met_id = os.environ.get('MET_ID')
@@ -30,16 +28,19 @@ headers = {
     'accept': "application/json"
     }
 
+# lat/long are the figures from the windguru custom location for the club
 metreq = "/metoffice/production/v0/forecasts/point/hourly?excludeParameterMetadata=false&includeLocationName=false&latitude=51.469&longitude=-0.2199"
 
+"""
 conn.request("GET", "/metoffice/production/v0/forecasts/point/hourly?excludeParameterMetadata=false&includeLocationName=false&latitude=51.469&longitude=-0.2199", headers=headers)
 
 res = conn.getresponse()
 data = res.read()
+"""
 
 #print(data.decode("utf-8"))
 
-
+# use requests to retrieve the forecast
 req = requests.get(meturl + metreq, headers=headers)
 print (req.status_code)
 #print (req.json())
@@ -47,7 +48,7 @@ print (req.status_code)
 #rgeo = geojson(req.text)
 rdict = req.json()
 
-# this print 3 as there are type, features and parameters
+# the lenght is 3 as there are 3 blocks: type, features and parameters
 print (len(rdict))
 
 #for x in range(len(rdict)):
@@ -68,7 +69,7 @@ for feature in rdict['features']:
 
 print (len(timeseries))
 """
-# list next 6 hours
+# list the timeseries entries
 for tentry in timeseries:
     print (tentry['time'],
             " ", tentry['windSpeed10m'],
@@ -86,9 +87,8 @@ for x in range(6):
             " ", timeseries[x]['screenTemperature'])
 
 type = rdict['type']
-
-type = rdict['type']
 print (type)
+
 fdict = rdict['features']
 #type = fdict['type']
 #print (type)
