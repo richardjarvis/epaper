@@ -14,7 +14,7 @@ if os.path.exists(libdir):
     sys.path.append(libdir)
 
 import logging
-from waveshare_epd import epd7in5_V2
+from waveshare_epd import epd7in5_V2 # for the 800x600 V2
 import time
 from PIL import Image,ImageDraw,ImageFont
 import traceback
@@ -27,6 +27,7 @@ from datetime import date
 import dateutil.relativedelta
 from dateutil import parser
 import pyowm # wraps open weather apis
+from lxml import html
 
 from bs4 import BeautifulSoup
 
@@ -57,6 +58,57 @@ def loadWind ():
     img2.save(file_in + ".bmp")
 
     # end
+
+
+# tide url & init tides
+tideurl = 'https://thamestides.org.uk/dailytides2.php?statcode=PUT&startdate=0'
+tides = []
+
+def loadTides():
+    global tideurl, tides
+
+    norows = 4
+    nocols = 5
+
+    tidepage = requests.get(tideurl)
+    tree = html.fromstring(tidepage.content)
+
+    #print (len(tides))
+    if (len(tides) == 0): # then initialise
+        for j in range(4, 4 + 4): # should be 4 - 8
+            column = []
+            for i in range(1, 1 + 5):
+                column.append("")
+            tides.append(column)
+    # now initialised
+    #print (len(tides))
+
+    # now parse the table into the array - note doesn't error
+    for row in range (4, 4 + 4):
+        for col in range(1, 1 + 5):
+            tides[row-4][col-1] = tree.xpath('//table[@class="first"]//tr['
+                        + str(row) + ']//td[' + str(col) + ']//text()')
+            #print ("tides ", str(row), str(col), tides[row-4][col-1])
+        # end for
+    # end for
+
+    # now clean the entries up
+    tstr = "" # a string
+    for row in range(4):
+        #print (str(tides[row][0]), len(tides[row][0]))
+        for col in range(5):
+            if (len(tides[row][col]) > 0): # if there something in the table
+                tstr = str(tides[row][col])
+                tstr = tstr[1:-1] # that the [] off
+                tides[row][col] = tstr.replace("'", "")
+            #print (tides[row][col], "!", end='')
+            #print (len(tides[row][0]))
+        #print ()
+        # end for
+    # end for
+
+    return (tides)
+    # end loadTides()
 
 ranelaghlogo = "./tmp/ranelagh-253x47"
 # function to convert logo
@@ -188,6 +240,7 @@ font18 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 18)
 font14 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 14)
 
 font36 = ImageFont.truetype('./epaperws/fonts/arial.ttf', 36)
+font28 = ImageFont.truetype('./epaperws/fonts/arial.ttf', 28)
 font24 = ImageFont.truetype('./epaperws/fonts/arial.ttf', 24)
 font20 = ImageFont.truetype('./epaperws/fonts/arial.ttf', 20)
 font16 = ImageFont.truetype('./epaperws/fonts/arial.ttf', 16)
@@ -243,6 +296,10 @@ try:
         # load wind on start
         logging.info("loadWind ...")
         loadWind()
+
+        # load tides
+        logging.info("loadTides ...")
+        prtides = loadTides() # array [][]
 
         #logging.info("loadPosts ...")
         #jdict = loadPosts() # return list
@@ -400,6 +457,24 @@ try:
             draw.text((Column2 + 95 + x*48-wt, 274 + 4*18), itemp, font = font16, fill = 0)
             # end of for timeseries
 
+        # and finally the tides!
+        tiderow = 236 + 36 + 6 * 18
+        draw.text((Column2, tiderow), "Tides (thamestides)", font = font28, fill = 0)
+        tidestr = ""
+        for row in range (0, 4): # 4 rows
+            #for col in range (0, 3): # 5 cols but we only want 0 - 3
+                #print (prtides[row][col])
+                #if (len(prtides[row][col]) > 0):
+                    #tidestr = tidestr + prtides[row][col] + " "
+                # end if
+            # end for
+            # if there are tidal time?, if so then process
+            if (len(prtides[row][1]) > 0):
+                tidestr = tidestr + prtides[row][0] + ": " \
+                        + prtides[row][1] + " " + prtides[row][2] + "m, "
+                #tidestr = tidestr + ", "
+        # end for
+        draw.text((Column2, tiderow + 32), tidestr, font = font14, fill = 0)
 
 
         # display and then sleep
