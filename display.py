@@ -111,6 +111,7 @@ def loadTides():
     # end loadTides()
 
 ranelaghlogo = "./tmp/ranelagh-253x47"
+#ranelaghlogo = "./tmp/RSC-180x33"
 # function to convert logo
 def ranelaghLogo():
 
@@ -164,6 +165,25 @@ def loadEvents ():
     return (req.json())
     # end
 
+# oldObs is None  # defined but none - pyowm.Observation(NULL)
+oldObs = 0
+def getObs(location):
+    global oldObs
+
+    try:
+        # get the observation
+        obs = owm.weather_at_place(location) # 'London,GB'
+
+        oldObs = obs # note in case of error
+        return(oldObs)
+
+    except e:
+        return(oldObs)
+
+    # APICallError, which bases all of the network/infrastructural issue-related errors
+    # APIResponseError, which bases all of 4xx HTTP errors
+    # ParseResponseError, which is raised upon impossibility to parse the JSON payload of API responses
+    # end
 #
 # load predictions from the met office datahub
 #
@@ -271,49 +291,56 @@ try:
     # prep the logo - used to initialise the image
     #ranelaghLogo()
 
-    logging.info("epd7in5_V2 Demo")
-
+    #logging.info("epd7in5_V2 Demo")
+    # Initialise the interface
     epd = epd7in5_V2.EPD()
 
     # for one run
     oneRun = 1
 
     #while (True):
-    for loops in range(1):
+    # for test purposed this should be at least 3 or 15mins
+    for loop in range(3):
 
         logging.info("init and Clear")
         epd.init()
         # don't clear if not needed
         #epd.Clear()
 
+        # load wind on every iteration
+        logging.info("loadWind ...")
+        loadWind()
+
         # get the weather
-        logging.info("Start loop ...")
-        obs = owm.weather_at_place('London,GB')
+        if (loop == 0 or loop == 2):
+            logging.info("Start loop ...")
+            obs = getObs('London,GB')
+
+        # break out
         weather = obs.get_weather()
         temperature = weather.get_temperature(unit='celsius')
         sunrise = weather.get_sunrise_time()
         sunset = weather.get_sunset_time()
         print (obs)
 
-        # load wind on start
-        logging.info("loadWind ...")
-        loadWind()
-
-        # load tides
-        logging.info("loadTides ...")
-        prtides = loadTides() # array [][]
+        # load tides every second loop
+        if ((loop % 2) == 0):
+            logging.info("loadTides ...")
+            prtides = loadTides() # array [][]
 
         #logging.info("loadPosts ...")
         #jdict = loadPosts() # return list
         #noPosts = len(jdict)
 
-        logging.info("loadEvents ...")
-        edict = loadEvents() # return list
-        noEvents = len(edict)
+        if ((loop % 2) == 0):
+            logging.info("loadEvents ...")
+            edict = loadEvents() # return list
+            noEvents = len(edict)
 
-        logging.info("getMet ...")
-        timeseries = getMet() # return list
-        noTimeseries = len(timeseries)
+        if ((loop % 2) == 0):
+            logging.info("getMet ...")
+            timeseries = getMet() # return list
+            noTimeseries = len(timeseries)
 
         logging.info("4.read bmp file on window")
         # Note changing width/height changes the orientation
@@ -422,6 +449,7 @@ try:
         # forecast at 236 + 36 + 2266 -> 274 and lists the next 6 hours
         tstr =  "Time:"
         twind = "Wind:"
+        #twind = "Wind (knots):"
         tgust = "Gust:"
         tdir =  "Dir:"
         ttemp = "Temp:"
@@ -431,10 +459,13 @@ try:
         draw.text((Column2, 274 + 3 * 18), tdir, font = font16, fill = 0)
         draw.text((Column2, 274 + 4 * 18), ttemp, font = font16, fill = 0)
 
+        # convert m/s -> knots
         for x in range(6):
             ftime = timeseries[x]['time']
             wspeed = timeseries[x]['windSpeed10m']
+            wspeed = wspeed * 1.943844
             gspeed = timeseries[x]['windGustSpeed10m']
+            gspeed = gspeed * 1.943844
             wdir = timeseries[x]['windDirectionFrom10m']
             wtemp = timeseries[x]['screenTemperature']
 
@@ -501,12 +532,12 @@ try:
         # display and then sleep
         epd.display(epd.getbuffer(Himage2))
         time.sleep(5)
-        #loops = loops + 1
+        #loop = loop + 1
 
         # should put the display to sleep & then delay 5 mins -> 300 seconds
-        #logging.info("sleeping ...")
-        #epd.sleep()
-        #time.sleep(300)
+        logging.info("sleeping ...")
+        epd.sleep()
+        time.sleep(300)
 
         #time.sleep(180) # minimum refresh interval
 

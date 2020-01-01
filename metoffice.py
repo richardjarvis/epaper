@@ -78,11 +78,12 @@ for tentry in timeseries:
             " ", tentry['screenTemperature'])
 """
 
+# knots = m/s * 1.943844
 # list next 6 hours
 for x in range(6):
     print (timeseries[x]['time'],
-            " ", timeseries[x]['windSpeed10m'],
-            " ", timeseries[x]['windGustSpeed10m'],
+            " ", round(timeseries[x]['windSpeed10m'] * 1.943844, 1),
+            " ", round(timeseries[x]['windGustSpeed10m'] * 1.943844, 1),
             " ", timeseries[x]['windDirectionFrom10m'],
             " ", timeseries[x]['screenTemperature'])
 
