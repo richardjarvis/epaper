@@ -13,10 +13,20 @@ libdir = "./epaperws/lib"
 if os.path.exists(libdir):
     sys.path.append(libdir)
 
+# used for pyowm install
+#locallib = "/usr/local/lib/python3.7/site-packages"
+locallib = "/home/pi/.local/lib/python3.7/site-packages"
+if os.path.exists(locallib):
+    sys.path.append(locallib)
+
+print (sys.path)
+    
 import logging
 from waveshare_epd import epd7in5_V2 # for the 800x600 V2
+#import time
 import time
-from PIL import Image,ImageDraw,ImageFont
+#from time import localtime, strftime, sleep
+from PIL import Image, ImageDraw, ImageFont
 import traceback
 
 # needed for html requests
@@ -31,6 +41,9 @@ from lxml import html
 
 from bs4 import BeautifulSoup
 
+# definitions
+#sdelay = 300
+FIVE_MINS = 300
 
 
 # changed from DEBUG to INFO
@@ -298,9 +311,13 @@ try:
     # for one run
     oneRun = 1
 
-    #while (True):
+    # prime the loop to last 5mins
+    next_call = time.time() + FIVE_MINS
+
     # for test purposed this should be at least 3 or 15mins
-    for loop in range(3):
+    loop = 0
+    #for loop in range(3):
+    while (True):
 
         logging.info("init and Clear")
         epd.init()
@@ -313,7 +330,7 @@ try:
 
         # get the weather
         if (loop == 0 or loop == 2):
-            logging.info("Start loop ...")
+            logging.info("getObs ...")
             obs = getObs('London,GB')
 
         # break out
@@ -537,9 +554,19 @@ try:
         # should put the display to sleep & then delay 5 mins -> 300 seconds
         logging.info("sleeping ...")
         epd.sleep()
-        time.sleep(300)
+
+        # sleep until 5mins is up
+        if ((next_call - time.time()) > 0.0):
+            time.sleep(next_call - time.time())
+
+        #time.sleep(300)
+        next_call = time.time() + FIVE_MINS
 
         #time.sleep(180) # minimum refresh interval
+
+        loop = loop + 1
+        if (loop == 99): # reset so it nevers exceeds 'int'
+            loop = 0
 
     # end processing loop
 
