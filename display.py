@@ -19,7 +19,7 @@ locallib = "/home/pi/.local/lib/python3.7/site-packages"
 if os.path.exists(locallib):
     sys.path.append(locallib)
 
-print (sys.path)
+#print (sys.path)
     
 import logging
 from waveshare_epd import epd7in5_V2 # for the 800x600 V2
@@ -52,6 +52,20 @@ logging.basicConfig(level=logging.INFO)
 winddomain = "https://wind.ranelaghsc.co.uk/"
 windurl = winddomain + "daywind.png"
 winddirurl = winddomain + "daywinddir.png"
+
+# convert MEC attritubutes to ISO and parse to a date object.
+def mectodate(date, hour, mins, ampm):
+
+    if (ampm == "PM" and hour < 12):
+        hour = hour + 12
+
+    # now format the iso string
+    estart = "{}T{:02d}:{:02d}".format(date, int(hour), int(mins))
+    # and then parse to date for return
+    tdate = parser.isoparse (estart)
+
+    return tdate
+# end mectodate()
 
 def loadWind ():
     r = requests.get(windurl, allow_redirects=True)
@@ -156,24 +170,65 @@ def loadPosts ():
     return (req.json())
     # end
 
+# The main access url for the wordpress post api
+siteurl = "https://ranelaghsc.co.uk/"
+eventsurl = "https://ranelaghsc.co.uk/wp-json/wp/v2/mec-events"
+mecurl = siteurl + "wp-json/mecexternal/v1/event/"
+# the events list
+events =["", "", ""]
+
 #
-# get the wordpress events
+# get the MEC events
 #
 def loadEvents ():
-    # The main access url for the wordpress post api
-    eventsurl = "https://ranelaghsc.co.uk/wp-json/wp/v2/mec-events"
+    global events, eventsurl, mecurl
 
-    # note the current date & calc the date for the last month
+    # note the current date & calc yesterday
     tnow = datetime.datetime.now()
-    ptime = tnow - dateutil.relativedelta.relativedelta(months=1)
-    tquery = ptime.isoformat()
+    yesterday = tnow - dateutil.relativedelta.relativedelta(days=1)
+    #tquery = ptime.isoformat()
 
-    # do the request - limted to '3'
+    # do the request - limted to '3' - need to increase to 8
     # note we can sort by event date as it is not exposed!
-    reqstr = eventsurl + "?per_page=3&order=desc"
+    reqstr = eventsurl + "?per_page=10&order=desc"
     req = requests.get(reqstr)
     jdict = req.json()
     noEvents = len(req.json())
+
+    # now query mec-event end point
+    for x in range(len(jdict)):
+        id = jdict[x]['id']
+
+        # get the actual event record
+        mecreq = requests.get(mecurl + str(id))
+        mecdict = mecreq.json()
+
+        tdate = mecdict['meta']['mec_date']['start']['date']
+        thour = mecdict['meta']['mec_date']['start']['hour']
+        tmins = mecdict['meta']['mec_date']['start']['minutes']
+        tampm = mecdict['meta']['mec_date']['start']['ampm']
+
+        # get a date object
+        prdate = mectodate(tdate, thour, tmins, tampm)
+        if (prdate > yesterday):
+            events[2] = events[1]
+            events[1] = events[0]
+            events[0] = mecdict
+        else:
+            break
+
+    # end for
+    #print ("> ", events[0]['ID'], " ",
+        #events[0]['post']['post_title'], " ",
+        #events[0]['meta']['mec_date']['start']['date'], " ",
+        #events[0]['meta']['mec_date']['start']['hour'], " ",
+        #events[0]['meta']['mec_date']['start']['minutes'], " ",
+        #events[0]['meta']['mec_date']['start']['ampm']
+        #)
+
+    return events # the 3 events we've found
+# end of function
+
 
     return (req.json())
     # end
@@ -236,20 +291,6 @@ def getMet ():
     return (timeseries)
     #end
 
-
-# convert MEC attritubutes to ISO and parse to a date object.
-def mectodate(date, hour, mins, ampm):
-
-    if (ampm == "PM" and hour < 12):
-        hour = hour + 12
-
-    # now format the iso string
-    estart = "{}T{:02d}:{:02d}".format(date, int(hour), int(mins))
-    # and then parse to date for return
-    tdate = parser.isoparse (estart)
-
-    return tdate
-    # end
 
 # mapping to images
 weather_icon_dict = {200:"6", 201:"6", 202:"6", 210:"6", 211:"6", 212 : "6", 
@@ -316,7 +357,7 @@ try:
 
     # for test purposed this should be at least 3 or 15mins
     loop = 0
-    #for loop in range(3):
+    #while (loop < 3):
     while (True):
 
         logging.info("init and Clear")
@@ -329,7 +370,7 @@ try:
         loadWind()
 
         # get the weather
-        if (loop == 0 or loop == 2):
+        if ((loop % 3) == 0):
             logging.info("getObs ...")
             obs = getObs('London,GB')
 
@@ -341,7 +382,7 @@ try:
         print (obs)
 
         # load tides every second loop
-        if ((loop % 2) == 0):
+        if ((loop % 3) == 0):
             logging.info("loadTides ...")
             prtides = loadTides() # array [][]
 
@@ -349,10 +390,11 @@ try:
         #jdict = loadPosts() # return list
         #noPosts = len(jdict)
 
-        if ((loop % 2) == 0):
+        if ((loop % 3) == 0):
             logging.info("loadEvents ...")
-            edict = loadEvents() # return list
-            noEvents = len(edict)
+            #edict = loadEvents() # return list
+            mecevents = loadEvents() # return list
+            noEvents = len(mecevents)
 
         if ((loop % 2) == 0):
             logging.info("getMet ...")
@@ -412,31 +454,48 @@ try:
         mecendpoint = 'https://ranelaghsc.co.uk/wp-json/mecexternal/v1/event/'
 
         for x in range(noEvents):
-            id = edict[x]['id']
-            pdate = edict[x]['date']
-            rtitle = edict[x]['title']
-            title = rtitle['rendered']
-            rcontent = edict[x]['content']
-            content = rcontent['rendered']
-            cleantext = BeautifulSoup(content, "lxml").text
+
+            #id = edict[x]['id']
+            #pdate = edict[x]['date']
+            #rtitle = edict[x]['title']
+            #title = rtitle['rendered']
+            #rcontent = edict[x]['content']
+            # need a replacement!
+            #content = rcontent['rendered']
+            #cleantext = BeautifulSoup(content, "lxml").text
 
             # for each event get the meta-date - another get
-            sglurl = mecendpoint + str(id)
-            mecreq = requests.get(sglurl)
+            #sglurl = mecendpoint + str(id)
+            #mecreq = requests.get(sglurl)
             # add error checking!
             # request.status_code == 200
 
-            mecdict = mecreq.json()
-            eventid = mecdict['ID']
-            etitle = mecdict['post']['post_title']
-            estart_date = mecdict['meta']['mec_date']['start']['date']
-            estart_hour = mecdict['meta']['mec_date']['start']['hour']
-            estart_mins = mecdict['meta']['mec_date']['start']['minutes']
-            estart_ampm = mecdict['meta']['mec_date']['start']['ampm']
-            eend_date = mecdict['meta']['mec_date']['end']['date']
-            eend_hour = mecdict['meta']['mec_date']['end']['hour']
-            eend_mins = mecdict['meta']['mec_date']['end']['minutes']
-            eend_ampm = mecdict['meta']['mec_date']['end']['ampm']
+            #mecdict = mecreq.json()
+            #eventid = mecdict['ID']
+            #etitle = mecdict['post']['post_title']
+            #estart_date = mecdict['meta']['mec_date']['start']['date']
+            #estart_hour = mecdict['meta']['mec_date']['start']['hour']
+            #estart_mins = mecdict['meta']['mec_date']['start']['minutes']
+            #estart_ampm = mecdict['meta']['mec_date']['start']['ampm']
+            #eend_date = mecdict['meta']['mec_date']['end']['date']
+            #eend_hour = mecdict['meta']['mec_date']['end']['hour']
+            #eend_mins = mecdict['meta']['mec_date']['end']['minutes']
+            #eend_ampm = mecdict['meta']['mec_date']['end']['ampm']
+
+            #mecdict = mecreq.json()
+            #eventid = mecdict['ID']
+            etitle = mecevents[x]['title']
+            econtent = mecevents[x]['content']
+            #etitle = mecevents[x]['post']['post_title']
+            cleantext = BeautifulSoup(econtent, "lxml").text
+            estart_date = mecevents[x]['meta']['mec_date']['start']['date']
+            estart_hour = mecevents[x]['meta']['mec_date']['start']['hour']
+            estart_mins = mecevents[x]['meta']['mec_date']['start']['minutes']
+            estart_ampm = mecevents[x]['meta']['mec_date']['start']['ampm']
+            eend_date = mecevents[x]['meta']['mec_date']['end']['date']
+            eend_hour = mecevents[x]['meta']['mec_date']['end']['hour']
+            eend_mins = mecevents[x]['meta']['mec_date']['end']['minutes']
+            eend_ampm = mecevents[x]['meta']['mec_date']['end']['ampm']
 
             # denormalise and parse to python date
             prdate = mectodate(estart_date, int(estart_hour), int(estart_mins), estart_ampm)
@@ -565,7 +624,7 @@ try:
         #time.sleep(180) # minimum refresh interval
 
         loop = loop + 1
-        if (loop == 99): # reset so it nevers exceeds 'int'
+        if (loop == 100): # reset so it nevers exceeds 'int'
             loop = 0
 
     # end processing loop

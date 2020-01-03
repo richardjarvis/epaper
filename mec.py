@@ -24,7 +24,8 @@ tquery = ptime.isoformat()
 
 
 # request the last 3 events
-reqstr = eventurl + "?per_page=3&order=desc"
+#reqstr = eventurl + "?per_page=8&order=desc&after=2020-01-04"
+reqstr = eventurl + "?per_page=8&order=desc"
 
 print ("Querying: ", reqstr)
 req = requests.get(reqstr)
