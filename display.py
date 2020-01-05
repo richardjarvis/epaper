@@ -87,6 +87,43 @@ def loadWind ():
 
     # end
 
+
+# extract flow from EA service - this is the source for PLA figures
+eauk = 'https://environment.data.gov.uk/flood-monitoring/id/stations/3400TH/readings?latest'
+flowtext = ""
+
+def eaukFlow():
+    global flowtext
+
+    page = requests.get(eauk)
+    if (page.status_code != 200):
+        return flowtext
+
+    # has content, meta and items
+    tree = page.json()
+    #print (len(tree))
+    #print (tree)
+
+    # items has level and flow
+    level = tree["items"][0]
+    flow = tree["items"][1]
+
+    flowval = int(flow["value"])
+
+    if (flowval > 0 and flowval <= 20):
+        flowtext = "Low"
+    elif (flowval > 20 and flowval <= 150):
+        flowtext = "Average"
+    elif (flowval > 150 and flowval <= 300):
+        flowtext = "Strong"
+    else:
+        flowtext = "Very strong"
+
+    flowtext = flowtext + " fluvial flows"
+
+    return flowtext
+# end eaukFlow
+
 # pla flow
 plaflow = ""
 placfm = 'http://www.pla.co.uk/templates/widgets/trafficWidget.cfm'
@@ -394,10 +431,17 @@ try:
             logging.info("loadTides ...")
             prtides = loadTides() # array [][]
 
+        """
         # load pla flowsj
         if ((loop % 3) == 0):
             logging.info("loadFlow ...")
             rflow = loadFlow() # string
+        """
+
+        # load eauk flows - updated every 30 mins so mode 6
+        if ((loop % 6) == 0):
+            logging.info("eaukFlow ...")
+            rflow = eaukFlow() # string
 
         #logging.info("loadPosts ...")
         #jdict = loadPosts() # return list
