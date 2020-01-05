@@ -13,7 +13,7 @@ libdir = "./epaperws/lib"
 if os.path.exists(libdir):
     sys.path.append(libdir)
 
-# used for pyowm install
+# used for pyowm install as it is a 'local' install
 #locallib = "/usr/local/lib/python3.7/site-packages"
 locallib = "/home/pi/.local/lib/python3.7/site-packages"
 if os.path.exists(locallib):
@@ -76,16 +76,34 @@ def loadWind ():
 
     file_in = "./tmp/daywind"
     img = Image.open(file_in + "-copy.png")
-    img2 = img.convert("1")
-    img2.save(file_in + ".bmp")
+    #img2 = img.convert("1")
+    img2 = img.convert("LA")
+    img2.save(file_in + ".png")
 
     file_in = "./tmp/daywinddir"
     img = Image.open(file_in + "-copy.png")
     img2 = img.convert("1")
-    img2.save(file_in + ".bmp")
+    img2.save(file_in + ".png")
 
     # end
 
+# pla flow
+plaflow = ""
+placfm = 'http://www.pla.co.uk/templates/widgets/trafficWidget.cfm'
+def loadFlow():
+    global plaflow, placfm
+
+    page = requests.get(placfm)
+    # check page.status_code
+
+    tree = html.fromstring(page.content)
+    pla = tree.xpath('//span[@class="warningTitle"]//text()')
+    
+    if (len(pla) > 0): # then we have a list
+        return pla[0]
+    else:
+        return ""
+# end loadFlow
 
 # tide url & init tides
 tideurl = 'https://thamestides.org.uk/dailytides2.php?statcode=PUT&startdate=0'
@@ -113,29 +131,19 @@ def loadTides():
     # now parse the table into the array - note doesn't error
     for row in range (4, 4 + 4):
         for col in range(1, 1 + 5):
-            tides[row-4][col-1] = tree.xpath('//table[@class="first"]//tr['
+            # returns a list of text items
+            tide = tree.xpath('//table[@class="first"]//tr['
                         + str(row) + ']//td[' + str(col) + ']//text()')
+            if (len(tide) > 0):
+                tides[row-4][col-1] = tide[0]
+            else:
+                tides[row-4][col-1] = ""
             #print ("tides ", str(row), str(col), tides[row-4][col-1])
         # end for
     # end for
 
-    # now clean the entries up
-    tstr = "" # a string
-    for row in range(4):
-        #print (str(tides[row][0]), len(tides[row][0]))
-        for col in range(5):
-            if (len(tides[row][col]) > 0): # if there something in the table
-                tstr = str(tides[row][col])
-                tstr = tstr[1:-1] # that the [] off
-                tides[row][col] = tstr.replace("'", "")
-            #print (tides[row][col], "!", end='')
-            #print (len(tides[row][0]))
-        #print ()
-        # end for
-    # end for
-
     return (tides)
-    # end loadTides()
+# end loadTides()
 
 ranelaghlogo = "./tmp/ranelagh-253x47"
 #ranelaghlogo = "./tmp/RSC-180x33"
@@ -185,7 +193,7 @@ def loadEvents ():
 
     # note the current date & calc yesterday
     tnow = datetime.datetime.now()
-    yesterday = tnow - dateutil.relativedelta.relativedelta(days=1)
+    yesterday = tnow - dateutil.relativedelta.relativedelta(hours=12)
     #tquery = ptime.isoformat()
 
     # do the request - limted to '3' - need to increase to 8
@@ -357,7 +365,7 @@ try:
 
     # for test purposed this should be at least 3 or 15mins
     loop = 0
-    #while (loop < 3):
+    #while (loop < 2):
     while (True):
 
         logging.info("init and Clear")
@@ -386,6 +394,11 @@ try:
             logging.info("loadTides ...")
             prtides = loadTides() # array [][]
 
+        # load pla flowsj
+        if ((loop % 3) == 0):
+            logging.info("loadFlow ...")
+            rflow = loadFlow() # string
+
         #logging.info("loadPosts ...")
         #jdict = loadPosts() # return list
         #noPosts = len(jdict)
@@ -409,8 +422,10 @@ try:
         draw = ImageDraw.Draw(Himage2)
         draw.text((10, 0), 'Club Wind', font = font36, fill = 0)
 
-        bmp = Image.open("./tmp/daywind.bmp")
-        bmp2 = Image.open("./tmp/daywinddir.bmp")
+        bmp = Image.open("./tmp/daywind.png")
+        bmp2 = Image.open("./tmp/daywinddir.png")
+        #bmp = Image.open("./tmp/daywind.bmp")
+        #bmp2 = Image.open("./tmp/daywinddir.bmp")
         bmp3 = Image.open(ranelaghlogo + ".bmp")
         # these image are 300 x 180 by default - gap 10 pixels
         Himage2.paste(bmp, (10, 46))
@@ -600,6 +615,9 @@ try:
         # end for
         draw.text((Column2, tiderow + 32), tidestr1, font = font16, fill = 0)
         draw.text((Column2, tiderow + 32 + 18), tidestr2, font = font16, fill = 0)
+
+        # Add the river flow
+        draw.text((Column2, tiderow + 32 + 2 * 18), rflow, font = font16, fill = 0)
 
         # save a copy of the image
         if (oneRun == 1):

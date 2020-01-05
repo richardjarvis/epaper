@@ -59,8 +59,13 @@ print (len(items))
 # now parse the table into the array - note doesn't error
 for row in range (4, 4 + 5):
     for col in range(1,6):
-        items[row-4][col-1] = tree.xpath('//table[@class="first"]//tr['
+        # returns list
+        item = tree.xpath('//table[@class="first"]//tr['
                     + str(row) + ']//td[' + str(col) + ']//text()')
+        if (len(item) > 0):
+            items[row-4][col-1] = item[0]
+        else:
+            items[row-4][col-1] = ""
         #print ("items ", str(row), str(col), items[row-4][col-1])
     # for
 # for
@@ -79,11 +84,8 @@ tstr = "" # a string
 for row in range(5):
     print (str(items[row][0]), len(items[row][0]))
     for col in range(5):
-        if (len(items[row][col]) > 0): # if there something in the table
-            tstr = str(items[row][col])
-            tstr = tstr[1:-1] # that the [] off
-            items[row][col] = tstr.replace("'", "")
         print (items[row][col], "!", end='')
         #print (len(items[row][0]))
     print ()
 
+# end of file
