@@ -6,7 +6,7 @@ The data sources are:
 - Events come from the clubs website which is wordpress based
 - The weather observation are via the open weather network
 - The forecast is from the met office via their datahub interface
-- River flow is scrapped from the PLA status page
+- River flow comes from the EA as it is update more regularly than the PLA
 - and the tide info is scrapped from thametimes.org.uk
 
 Note: any keys are injected by environment variables so you'll need to create your own epaper.env file and source this before running the code.

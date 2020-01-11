@@ -237,6 +237,10 @@ def loadEvents ():
     # note we can sort by event date as it is not exposed!
     reqstr = eventsurl + "?per_page=10&order=desc"
     req = requests.get(reqstr)
+    if (req.status_code != 200):
+        logging.error("events return not 200")
+        return events
+
     jdict = req.json()
     noEvents = len(req.json())
 
@@ -246,6 +250,10 @@ def loadEvents ():
 
         # get the actual event record
         mecreq = requests.get(mecurl + str(id))
+        if (mecreq.status_code != 200):
+            logging.error("mecreq return not 200")
+            return events
+
         mecdict = mecreq.json()
 
         tdate = mecdict['meta']['mec_date']['start']['date']
@@ -427,7 +435,7 @@ try:
         print (obs)
 
         # load tides every second loop
-        if ((loop % 3) == 0):
+        if ((loop % 6) == 0):
             logging.info("loadTides ...")
             prtides = loadTides() # array [][]
 
@@ -438,8 +446,8 @@ try:
             rflow = loadFlow() # string
         """
 
-        # load eauk flows - updated every 30 mins so mode 6
-        if ((loop % 6) == 0):
+        # load eauk flows - updated every 15 mins so mode 3
+        if ((loop % 3) == 0):
             logging.info("eaukFlow ...")
             rflow = eaukFlow() # string
 
@@ -453,7 +461,7 @@ try:
             mecevents = loadEvents() # return list
             noEvents = len(mecevents)
 
-        if ((loop % 2) == 0):
+        if ((loop % 3) == 0):
             logging.info("getMet ...")
             timeseries = getMet() # return list
             noTimeseries = len(timeseries)
