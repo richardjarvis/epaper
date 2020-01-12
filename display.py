@@ -89,6 +89,7 @@ def loadWind ():
 
 
 # extract flow from EA service - this is the source for PLA figures
+# flow is measured in m3/sec
 eauk = 'https://environment.data.gov.uk/flood-monitoring/id/stations/3400TH/readings?latest'
 flowtext = ""
 
@@ -97,6 +98,7 @@ def eaukFlow():
 
     page = requests.get(eauk)
     if (page.status_code != 200):
+        logging.error("eauk return not 200")
         return flowtext
 
     # has content, meta and items
@@ -110,7 +112,8 @@ def eaukFlow():
 
     flowval = int(flow["value"])
 
-    if (flowval > 0 and flowval <= 20):
+    # removed > 0 so it covers the negative flow situation
+    if (flowval <= 20):
         flowtext = "Low"
     elif (flowval > 20 and flowval <= 150):
         flowtext = "Average"
