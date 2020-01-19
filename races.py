@@ -272,10 +272,10 @@ for feature in rdict['features']:
 cnt = loadEvents()
 raceEvents = events # the global
 if (cnt == 1):
-    print (f"We have {cnt} race coming up:\n")
+    print ("We have {} race coming up:\n".format(cnt))
     races = "We have {} race coming up:\n\n".format(cnt)
 else:
-    print (f"We have {cnt} races coming up:\n")
+    print ("We have {} races coming up:\n".format(cnt))
     races = "We have {} races coming up:\n\n".format(cnt)
 
 for x in range(cnt):
@@ -326,14 +326,18 @@ for x in range(cnt):
     if (x > 0):
         print ('')
         races = races + "\n"
-    print (f'{raceTitle}, {prdate:%a %d %b @ %H:%M}')
-    print (f'{cleantext}')
-    print (f'Wind {windDirect} ({windNo}), {windSpeed} kts, gusting {windGust} kts')
-    print (f'and {signW}, temperature {feelsLike}C, with {probOfPrec}% probability of rain')
+    #print (f'{raceTitle}, {prdate:%a %d %b @ %H:%M}')
+    print ("{}, {:%a %d %b @ %H:%M}\n".format(raceTitle, prdate))
+    print ('{cleantext}'.format(cleantext))
+    #print (f'Wind {windDirect} ({windNo}), {windSpeed} kts, gusting {windGust} kts')
+    print ("Wind {} ({}), {} kts, gusting {} kts".format(windDirect, windNo, windSpeed, windGust))
+    #print (f'and {signW}, temperature {feelsLike}C, with {probOfPrec}% probability of rain')
+    print ("and it will be {}, temperature {}C, with {}% probability of rain".format(signW, feelsLike, probOfPrec))
 
     #races = races + "We have {1} races coming up:\n\n".format(cnt)
     races = races + "{}, {:%a %d %b @ %H:%M}\n".format(raceTitle, prdate)
     races = races + cleantext + "\n"
+    races = races + "Wind {} ({}), {} kts, gusting {} kts".format(windDirect, windNo, windSpeed, windGust)
     races = races + "and it will be {}, temperature {}C, with {}% probability of rain".format(signW, feelsLike, probOfPrec)
     # now dispaly the races
 
