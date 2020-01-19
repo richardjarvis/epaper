@@ -148,7 +148,10 @@ def loadEvents ():
 
     # do the request - limted to '3' - need to increase to 8
     # note we can sort by event date as it is not exposed!
-    reqstr = eventsurl + "?per_page=10&order=desc"
+
+
+    # increased to 15 with feb/mar loaded
+    reqstr = eventsurl + "?per_page=15&order=desc"
     req = requests.get(reqstr)
     if (req.status_code != 200):
         logging.error("events return not 200")
@@ -176,7 +179,7 @@ def loadEvents ():
         tampm = mecdict['meta']['mec_date']['start']['ampm']
 
         # get a date object
-        prdate = mectodate(tdate, thour, tmins, tampm)
+        prdate = mectodate(tdate, int(thour), int(tmins), tampm)
         #print (prdate, tnow, forecastLimit)
         if (prdate > tnow):
             if (prdate < forecastLimit):
@@ -290,7 +293,7 @@ for x in range(cnt):
     tampm = raceEvents[x]['meta']['mec_date']['start']['ampm']
 
     # get a date object
-    prdate = mectodate(tdate, thour, tmins, tampm)
+    prdate = mectodate(tdate, int(thour), int(tmins), tampm)
 
     # This is the event time
     #raceStart = "2020-01-12T14:30"

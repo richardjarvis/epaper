@@ -249,24 +249,33 @@ def loadEvents ():
 
     # do the request - limted to '3' - need to increase to 8
     # note we can sort by event date as it is not exposed!
-    reqstr = eventsurl + "?per_page=10&order=desc"
+
+    # following has been changed 15!
+    reqstr = eventsurl + "?per_page=15&order=desc"
     req = requests.get(reqstr)
     if (req.status_code != 200):
         logging.error("events return not 200")
-        return events
+        return 0
 
     jdict = req.json()
-    noEvents = len(req.json())
+    lenjdict = len(req.json())
+
+    #print(lenjdict)
+    #print(jdict)
 
     # now query mec-event end point
+    # the followig could be 0, 1, 2, or 3!
+    eventCnt = 0
     for x in range(len(jdict)):
+        print(x)
+
         id = jdict[x]['id']
 
         # get the actual event record
         mecreq = requests.get(mecurl + str(id))
         if (mecreq.status_code != 200):
             logging.error("mecreq return not 200")
-            return events
+            return 0
 
         mecdict = mecreq.json()
 
@@ -276,24 +285,31 @@ def loadEvents ():
         tampm = mecdict['meta']['mec_date']['start']['ampm']
 
         # get a date object
-        prdate = mectodate(tdate, thour, tmins, tampm)
+        prdate = mectodate(tdate, int(thour), int(tmins), tampm)
+
+        #print(prdate, yesterday, prdate > yesterday)
         if (prdate > yesterday):
             events[2] = events[1]
             events[1] = events[0]
             events[0] = mecdict
+
+            if (eventCnt < 3): # we only want 3!
+                eventCnt = eventCnt + 1
         else:
             break
-
     # end for
-    #print ("> ", events[0]['ID'], " ",
-        #events[0]['post']['post_title'], " ",
-        #events[0]['meta']['mec_date']['start']['date'], " ",
-        #events[0]['meta']['mec_date']['start']['hour'], " ",
-        #events[0]['meta']['mec_date']['start']['minutes'], " ",
-        #events[0]['meta']['mec_date']['start']['ampm']
-        #)
+    """
+    print ("> ", events[0]['ID'], " ",
+        events[0]['post']['post_title'], " ",
+        events[0]['meta']['mec_date']['start']['date'], " ",
+        events[0]['meta']['mec_date']['start']['hour'], " ",
+        events[0]['meta']['mec_date']['start']['minutes'], " ",
+        events[0]['meta']['mec_date']['start']['ampm']
+        )
+    """
 
-    return events # the 3 events we've found
+    #print ("Found: ", eventCnt)
+    return eventCnt # the no of events we've found
 # end of function
 
 
@@ -472,8 +488,10 @@ try:
         if ((loop % 3) == 0):
             logging.info("loadEvents ...")
             #edict = loadEvents() # return list
-            mecevents = loadEvents() # return list
-            noEvents = len(mecevents)
+            #mecevents = loadEvents() # return list
+            #noEvents = len(mecevents)
+            noEvents = loadEvents() # return list
+            mecevents = events # the global
 
         if ((loop % 3) == 0):
             logging.info("getMet ...")
