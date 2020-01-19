@@ -67,12 +67,23 @@ def mectodate(date, hour, mins, ampm):
     return tdate
 # end mectodate()
 
-def loadWind ():
-    r = requests.get(windurl, allow_redirects=True)
-    open('./tmp/daywind-copy.png', 'wb').write(r.content)
 
-    r2 = requests.get(winddirurl, allow_redirects=True)
-    open('./tmp/daywinddir-copy.png', 'wb').write(r2.content)
+#
+# loadWind from website - ignore if connectivity error
+def loadWind ():
+    try:
+        r = requests.get(windurl, allow_redirects=True)
+        open('./tmp/daywind-copy.png', 'wb').write(r.content)
+    except e:
+        logging.error("loadWind(): daywind ",  rs.status_code)
+        return
+
+    try:
+        r2 = requests.get(winddirurl, allow_redirects=True)
+        open('./tmp/daywinddir-copy.png', 'wb').write(r2.content)
+    except e:
+        logging.error("loadWind(): daywinddir ",  rs.status_code)
+        return
 
     file_in = "./tmp/daywind"
     img = Image.open(file_in + "-copy.png")
@@ -85,7 +96,7 @@ def loadWind ():
     img2 = img.convert("1")
     img2.save(file_in + ".png")
 
-    # end
+# end loadWind()
 
 
 # extract flow from EA service - this is the source for PLA figures

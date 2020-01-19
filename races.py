@@ -1,7 +1,15 @@
 #
+# races.py - this builds on the MEC capability and Met Office
+# to provide a summary of up coming races along with a weather forecast
 #
+# It does three things
+#   find the events within the next 7 days (limited to met office forecast)
+#   and extracts the event details - which have duty and tides for now
+#   gets the met office 3 hour forecats for the period
+#   constructs and sends an email - racing@ranelaghsc.co.uk
 #
 
+# imports
 import os   # for environ()
 import requests
 import geojson  # the structure for the data
@@ -12,7 +20,11 @@ import dateutil.relativedelta
 from dateutil import parser
 from bs4 import BeautifulSoup
 
+# for email
+import smtplib
+from email.mime.text import MIMEText
 
+# for met office significant weather
 Weather = [
     "Clear night",
     "Sunny day",
@@ -47,6 +59,7 @@ Weather = [
     "Thunder" ]
 
 
+# compass direction for the wind direction summary
 compass = ["N","NNE","NE",
             "ENE","E","ESE",
             "SE","SSE","S",
@@ -58,15 +71,43 @@ def windDir(dir):
 
     direction = ""
 
-    direction = compass[int(round(dir/22.5, 0)) + 1]
-    #if (dir > and dir < 11):
-        #direction = "N"
-    #elif (dir > 11 and dir < xxx):
-        #direction = "NNE"
+    direction = compass[int(round(dir/22.5, 0))]
 
     return direction
 
 # end windDir
+
+
+#
+# email results file to defined recipent
+def sendRaces(races):
+    #
+    #g_mail_recipent = 'integ@ranelaghsc.co.uk'
+    g_mail_recipent = 'racing@ranelaghsc.co.uk'
+    fromaddr = 'ranelaghscapp@gmail.com'
+    subject = "Forthcoming club races"
+    raceday = datetime.datetime.now().strftime("%d %b %Y")
+
+    # Credentials (to parameterise and inject)
+    username = 'ranelaghscapp@gmail.com'
+    password = 'R0nel0ghSC'
+
+    msg = MIMEText(races)
+
+    msg['Subject'] = subject
+    msg['From'] = fromaddr
+    msg['To'] = g_mail_recipent # from the conf file
+
+
+    # The actual mail send
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.starttls()
+    server.login(username, password)
+    #server.sendmail(fromaddr, toaddr, message)
+    server.send_message(msg)
+    server.close()
+# end of sendRaces()
+
 
 def mectodate(date, hour, mins, ampm):
 
@@ -100,7 +141,8 @@ def loadEvents ():
     # note the current date & calc yesterday
     tnow = datetime.datetime.now()
     # days = 6.5 is probably a sensible limit
-    forecastLimit = tnow + dateutil.relativedelta.relativedelta(days=6.8)
+    forecastLimit = tnow + dateutil.relativedelta.relativedelta(days=7)
+    #forecastLimit = tnow + dateutil.relativedelta.relativedelta(days=6.8)
     #tquery = ptime.isoformat()
     #print (tnow, forecastLimit)
 
@@ -226,7 +268,12 @@ for feature in rdict['features']:
 # now load the events
 cnt = loadEvents()
 raceEvents = events # the global
-print (f"We have {cnt} races coming up:\n")
+if (cnt == 1):
+    print (f"We have {cnt} race coming up:\n")
+    races = "We have {} race coming up:\n\n".format(cnt)
+else:
+    print (f"We have {cnt} races coming up:\n")
+    races = "We have {} races coming up:\n\n".format(cnt)
 
 for x in range(cnt):
     #print (raceEvents[x])
@@ -275,12 +322,19 @@ for x in range(cnt):
 
     if (x > 0):
         print ('')
+        races = races + "\n"
     print (f'{raceTitle}, {prdate:%a %d %b @ %H:%M}')
     print (f'{cleantext}')
     print (f'Wind {windDirect} ({windNo}), {windSpeed} kts, gusting {windGust} kts')
     print (f'and {signW}, temperature {feelsLike}C, with {probOfPrec}% probability of rain')
 
+    #races = races + "We have {1} races coming up:\n\n".format(cnt)
+    races = races + "{}, {:%a %d %b @ %H:%M}\n".format(raceTitle, prdate)
+    races = races + cleantext + "\n"
+    races = races + "and it will be {}, temperature {}C, with {}% probability of rain".format(signW, feelsLike, probOfPrec)
     # now dispaly the races
+
+sendRaces(races)
 
 
 # we need to step thru the timeseries and find the entry for the race date/time
