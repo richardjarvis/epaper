@@ -74,14 +74,14 @@ def loadWind ():
     try:
         r = requests.get(windurl, allow_redirects=True)
         open('./tmp/daywind-copy.png', 'wb').write(r.content)
-    except e:
+    except Exception as e:
         logging.error("loadWind(): daywind ",  rs.status_code)
         return
 
     try:
         r2 = requests.get(winddirurl, allow_redirects=True)
         open('./tmp/daywinddir-copy.png', 'wb').write(r2.content)
-    except e:
+    except Exception as e:
         logging.error("loadWind(): daywinddir ",  rs.status_code)
         return
 
@@ -267,7 +267,7 @@ def loadEvents ():
     # the followig could be 0, 1, 2, or 3!
     eventCnt = 0
     for x in range(len(jdict)):
-        print(x)
+        #print(x)
 
         id = jdict[x]['id']
 
@@ -328,7 +328,7 @@ def getObs(location):
         oldObs = obs # note in case of error
         return(oldObs)
 
-    except e:
+    except Exeption as e:
         return(oldObs)
 
     # APICallError, which bases all of the network/infrastructural issue-related errors
@@ -491,6 +491,7 @@ try:
             #mecevents = loadEvents() # return list
             #noEvents = len(mecevents)
             noEvents = loadEvents() # return list
+            #print (noEvents)
             mecevents = events # the global
 
         if ((loop % 3) == 0):

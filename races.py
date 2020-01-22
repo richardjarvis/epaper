@@ -328,7 +328,7 @@ for x in range(cnt):
         races = races + "\n"
     #print (f'{raceTitle}, {prdate:%a %d %b @ %H:%M}')
     print ("{}, {:%a %d %b @ %H:%M}\n".format(raceTitle, prdate))
-    print ('{cleantext}'.format(cleantext))
+    print ('{}'.format(cleantext))
     #print (f'Wind {windDirect} ({windNo}), {windSpeed} kts, gusting {windGust} kts')
     print ("Wind {} ({}), {} kts, gusting {} kts".format(windDirect, windNo, windSpeed, windGust))
     #print (f'and {signW}, temperature {feelsLike}C, with {probOfPrec}% probability of rain')
@@ -338,7 +338,7 @@ for x in range(cnt):
     races = races + "{}, {:%a %d %b @ %H:%M}\n".format(raceTitle, prdate)
     races = races + cleantext + "\n"
     races = races + "Wind {} ({}), {} kts, gusting {} kts".format(windDirect, windNo, windSpeed, windGust)
-    races = races + "and it will be {}, temperature {}C, with {}% probability of rain".format(signW, feelsLike, probOfPrec)
+    races = races + " and it will be {}, temperature {}C, with {}% probability of rain\n".format(signW, feelsLike, probOfPrec)
     # now dispaly the races
 
 sendRaces(races)
