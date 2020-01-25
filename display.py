@@ -232,7 +232,7 @@ def loadPosts ():
 # The main access url for the wordpress post api
 siteurl = "https://ranelaghsc.co.uk/"
 eventsurl = "https://ranelaghsc.co.uk/wp-json/wp/v2/mec-events"
-mecurl = siteurl + "wp-json/mecexternal/v1/event/"
+mecurl = siteurl + "wp-json/mecexternal/v1/calendar/922"
 # the events list
 events =["", "", ""]
 
@@ -251,8 +251,8 @@ def loadEvents ():
     # note we can sort by event date as it is not exposed!
 
     # following has been changed 15!
-    reqstr = eventsurl + "?per_page=15&order=desc"
-    req = requests.get(reqstr)
+    #reqstr = eventsurl + "?per_page=15&order=desc"
+    req = requests.get(mecurl)
     if (req.status_code != 200):
         logging.error("events return not 200")
         return 0
@@ -266,47 +266,30 @@ def loadEvents ():
     # now query mec-event end point
     # the followig could be 0, 1, 2, or 3!
     eventCnt = 0
-    for x in range(len(jdict)):
+
+    mdict = jdict["content_json"] # this is actually the data
+    for x in mdict:
         #print(x)
 
-        id = jdict[x]['id']
+        #id = jdict[x]['id']
+        for y in mdict[x]: # this at the date or individual level
 
-        # get the actual event record
-        mecreq = requests.get(mecurl + str(id))
-        if (mecreq.status_code != 200):
-            logging.error("mecreq return not 200")
-            return 0
+            """
+            tdate = mecdict['meta']['mec_date']['start']['date']
+            thour = mecdict['meta']['mec_date']['start']['hour']
+            tmins = mecdict['meta']['mec_date']['start']['minutes']
+            tampm = mecdict['meta']['mec_date']['start']['ampm']
 
-        mecdict = mecreq.json()
+            # get a date object
+            prdate = mectodate(tdate, int(thour), int(tmins), tampm)
+            """
 
-        tdate = mecdict['meta']['mec_date']['start']['date']
-        thour = mecdict['meta']['mec_date']['start']['hour']
-        tmins = mecdict['meta']['mec_date']['start']['minutes']
-        tampm = mecdict['meta']['mec_date']['start']['ampm']
-
-        # get a date object
-        prdate = mectodate(tdate, int(thour), int(tmins), tampm)
-
-        #print(prdate, yesterday, prdate > yesterday)
-        if (prdate > yesterday):
-            events[2] = events[1]
-            events[1] = events[0]
-            events[0] = mecdict
-
-            if (eventCnt < 3): # we only want 3!
+            if (eventCnt < 3): # then note the dict entry
+                events[eventCnt] = y["data"]
                 eventCnt = eventCnt + 1
-        else:
-            break
+
+        # end for
     # end for
-    """
-    print ("> ", events[0]['ID'], " ",
-        events[0]['post']['post_title'], " ",
-        events[0]['meta']['mec_date']['start']['date'], " ",
-        events[0]['meta']['mec_date']['start']['hour'], " ",
-        events[0]['meta']['mec_date']['start']['minutes'], " ",
-        events[0]['meta']['mec_date']['start']['ampm']
-        )
-    """
 
     #print ("Found: ", eventCnt)
     return eventCnt # the no of events we've found
@@ -584,6 +567,7 @@ try:
 
             #mecdict = mecreq.json()
             #eventid = mecdict['ID']
+            """
             etitle = mecevents[x]['title']
             econtent = mecevents[x]['content']
             #etitle = mecevents[x]['post']['post_title']
@@ -592,10 +576,22 @@ try:
             estart_hour = mecevents[x]['meta']['mec_date']['start']['hour']
             estart_mins = mecevents[x]['meta']['mec_date']['start']['minutes']
             estart_ampm = mecevents[x]['meta']['mec_date']['start']['ampm']
-            eend_date = mecevents[x]['meta']['mec_date']['end']['date']
-            eend_hour = mecevents[x]['meta']['mec_date']['end']['hour']
-            eend_mins = mecevents[x]['meta']['mec_date']['end']['minutes']
-            eend_ampm = mecevents[x]['meta']['mec_date']['end']['ampm']
+            """
+
+            #print (mecevents[x])
+            # which has id, data and date
+            etitle = mecevents[x]["title"]
+            econtent = mecevents[x]["content"]
+            cleantext = BeautifulSoup(econtent, "lxml").text
+            estart_date = mecevents[x]["meta"]["mec_start_date"]
+            estart_hour = mecevents[x]["meta"]["mec_start_time_hour"]
+            estart_mins = mecevents[x]["meta"]["mec_start_time_minutes"]
+            estart_ampm = mecevents[x]["meta"]["mec_start_time_ampm"]
+
+            #eend_date = mecevents[x]['meta']['mec_date']['end']['date']
+            #eend_hour = mecevents[x]['meta']['mec_date']['end']['hour']
+            #eend_mins = mecevents[x]['meta']['mec_date']['end']['minutes']
+            #eend_ampm = mecevents[x]['meta']['mec_date']['end']['ampm']
 
             # denormalise and parse to python date
             prdate = mectodate(estart_date, int(estart_hour), int(estart_mins), estart_ampm)

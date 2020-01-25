@@ -1,5 +1,6 @@
 #
 # demo code for the wordpress mec rest api
+# this now works with the shortcode apis
 #
 #
 
@@ -26,6 +27,10 @@ tquery = ptime.isoformat()
 # request the last 3 events
 reqstr = eventurl + "?per_page=15&order=desc"
 
+# this is based on the events calendar view
+# it returns the next 6 events
+reqstr = "https://www.ranelaghsc.co.uk/wp-json/mecexternal/v1/calendar/922"
+
 print ("Querying: ", reqstr)
 req = requests.get(reqstr)
 
@@ -38,37 +43,61 @@ elif req.status_code == 404:
 # extract the dict[
 pdict = req.json()
 
-print ("No of events ", len(req.json()))
+print ("No of events ", type(pdict), len(pdict))
 
 # iterate over the events and extract each in turn
-for x in range(len(pdict)):
-    id = pdict[x]['id']
-    pdate = pdict[x]['date']
-    rtitle = pdict[x]['title']
-    title = rtitle['rendered']
+#for x in pdict:
+    #print ("Element: ", x)
 
-    print (id, " ", pdate, " ", title)
+#print ("content_json: ", type (pdict["content_json"]), pdict["content_json"])
+#print ("html: ", pdict["content_html"])
 
-    # get the single MEC event record
-    print ("MEC query ", mecurl + str(id))
-    mecreq = requests.get(mecurl + str(id))
-    if mecreq.status_code == 200:
-        print('Success!')
-    else:
-        print('Not Found.', mecreq.status_code)
-        exit (1)
+jdict = pdict["content_json"] # this is actually the data
 
-    mecdict = mecreq.json()
+print ("len of data: ", len(jdict))
 
-    print ("> ", mecdict['ID'], " ",
-        mecdict['post']['post_title'], " ",
-        mecdict['meta']['mec_date']['start']['date'], " ",
-        mecdict['meta']['mec_date']['start']['hour'], " ",
-        mecdict['meta']['mec_date']['start']['minutes'], " ",
-        mecdict['meta']['mec_date']['start']['ampm']
-        )
+events = ["", "", ""]
+cnt = 0
+for x in jdict: # this is the top level
+    #print ("content_json elements: ", x)
+    #print (type(x), len(x))
 
-    x = x+1
-    # end of while
+    #print (type(tdict[x]))
+    #print (tdict[x])
+
+    for y in jdict[x]: # this at the date or individual level
+        #print (type(y), len(y))
+        #for v in y:
+        #    print (v)
+
+        #print(type(y["data"])) # data
+        #print(y["data"])
+
+
+        #for z in y["data"]:
+            #print (z)
+            #print (y["data"][z])
+
+        #for r in y["data"]["meta"]:
+            #print (r)
+
+        # which has id, data and date
+        stitle = y["data"]["title"]
+        scontent = y["data"]["content"]
+        sdate = y["data"]["meta"]["mec_start_date"]
+        shour = y["data"]["meta"]["mec_start_time_hour"]
+        smins = y["data"]["meta"]["mec_start_time_minutes"]
+        sampm = y["data"]["meta"]["mec_start_time_ampm"]
+
+        print (stitle, scontent, sdate, shour, smins, sampm)
+
+        if (cnt < 3): # then note the dict entry
+            events[cnt] = y["data"]
+            cnt = cnt + 1
+
+# end of dict
+for x in range (cnt):
+    print (x, events[x]["title"])
+
 
 # end of file
