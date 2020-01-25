@@ -318,7 +318,9 @@ for x in range(cnt): # for the 0-4 races ...
     cleantext = BeautifulSoup(econtent, "lxml").text
     cleantext = cleantext[0:-1] # remove '\n'
 
-    raceTitle = raceEvents[x]['title']
+    raceTitle = BeautifulSoup(raceEvents[x]['title'], "lxml").text
+    #raceTitle = raceEvents[x]['title']
+    #raceTitle = raceEvents[x]['title']
     windSpeed = round(tentry['windSpeed10m'] * 1.943844, 1)
     windGust = round(tentry['windGustSpeed10m'] * 1.943844, 1)
     windNo = int(tentry['windDirectionFrom10m'])

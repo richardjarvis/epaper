@@ -580,7 +580,8 @@ try:
 
             #print (mecevents[x])
             # which has id, data and date
-            etitle = mecevents[x]["title"]
+            etitle = BeautifulSoup(mecevents[x]["title"], "lxml").text
+            #etitle = 
             econtent = mecevents[x]["content"]
             cleantext = BeautifulSoup(econtent, "lxml").text
             estart_date = mecevents[x]["meta"]["mec_start_date"]

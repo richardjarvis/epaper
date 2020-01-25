@@ -8,6 +8,7 @@ import requests
 import json
 import datetime
 import dateutil.relativedelta
+from bs4 import BeautifulSoup
 
 
 # The main access url for the wordpress site
@@ -97,7 +98,7 @@ for x in jdict: # this is the top level
 
 # end of dict
 for x in range (cnt):
-    print (x, events[x]["title"])
+    print (x, BeautifulSoup(events[x]["title"], features="lxml").text)
 
 
 # end of file
