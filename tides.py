@@ -28,6 +28,8 @@
 from lxml import html
 import requests
 
+def removeNonAscii(s): return "".join(i for i in s if (ord(i)<128 and ord(i)>31))
+
 page = requests.get('https://thamestides.org.uk/dailytides2.php?statcode=PUT&startdate=0')
 if (page.status_code == 200):
     print ("Success")
@@ -85,7 +87,8 @@ for row in range (4, 4 + 5):
         item = tree.xpath('//table[@class="first"]//tr['
                     + str(row) + ']//td[' + str(col) + ']//text()')
         if (len(item) > 0):
-            items[row-4][col-1] = item[0]
+            #items[row-4][col-1] = item[0]
+            items[row-4][col-1] = removeNonAscii(item[0])
         else:
             items[row-4][col-1] = ""
         #print ("items ", str(row), str(col), items[row-4][col-1])

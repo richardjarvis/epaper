@@ -83,6 +83,9 @@ winddomain = "https://wind.ranelaghsc.co.uk/"
 windurl = winddomain + "daywind.png"
 winddirurl = winddomain + "daywinddir.png"
 
+def removeNonAscii(s):
+    return "".join(i for i in s if (ord(i)<128 and ord(i)>31))
+
 # convert MEC attritubutes to ISO and parse to a date object.
 def mectodate(date, hour, mins, ampm):
 
@@ -216,7 +219,7 @@ def loadTides():
             tide = tree.xpath('//table[@class="first"]//tr['
                         + str(row) + ']//td[' + str(col) + ']//text()')
             if (len(tide) > 0):
-                tides[row-4][col-1] = tide[0]
+                tides[row-4][col-1] = removeNonAscii(tide[0])
             else:
                 tides[row-4][col-1] = ""
             #print ("tides ", str(row), str(col), tides[row-4][col-1])
