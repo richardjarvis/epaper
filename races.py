@@ -126,9 +126,9 @@ def mectodate(date, hour, mins, ampm):
 # The main access url for the wordpress post api
 siteurl = "https://ranelaghsc.co.uk/"
 eventsurl = "https://ranelaghsc.co.uk/wp-json/wp/v2/mec-events"
-mecurl = siteurl + "wp-json/mecexternal/v1/event/"
+mecurl = siteurl + "wp-json/mecexternal/v1/calendar/1778"
 # the events list
-events =["", "", ""]
+events =["", "", "", ""]
 eventCnt = 0
 
 #
@@ -141,7 +141,7 @@ def loadEvents ():
     # note the current date & calc yesterday
     tnow = datetime.datetime.now()
     # days = 6.5 is probably a sensible limit
-    forecastLimit = tnow + dateutil.relativedelta.relativedelta(days=7)
+    forecastLimit = tnow + dateutil.relativedelta.relativedelta(days=6.5)
     #forecastLimit = tnow + dateutil.relativedelta.relativedelta(days=6.8)
     #tquery = ptime.isoformat()
     #print (tnow, forecastLimit)
@@ -151,55 +151,58 @@ def loadEvents ():
 
 
     # increased to 15 with feb/mar loaded
-    reqstr = eventsurl + "?per_page=15&order=desc"
-    req = requests.get(reqstr)
+    #reqstr = eventsurl + "?per_page=15&order=desc"
+    req = requests.get(mecurl)
     if (req.status_code != 200):
         logging.error("events return not 200")
         return eventCnt
 
-    jdict = req.json()
+    pdict = req.json()
     noEvents = len(req.json())
     #print (noEvents)
 
+    jdict = pdict["content_json"] # this is actually the data
     # now query mec-event end point
-    for x in range(len(jdict)):
-        id = jdict[x]['id']
+    for x in jdict:
+        #id = jdict[x]['id']
 
         # get the actual event record
-        mecreq = requests.get(mecurl + str(id))
-        if (mecreq.status_code != 200):
-            logging.error("mecreq return not 200")
-            return 0
+        #mecreq = requests.get(mecurl + str(id))
+        #if (mecreq.status_code != 200):
+            #logging.error("mecreq return not 200")
+            #return 0
 
-        mecdict = mecreq.json()
+        for y in jdict[x]: # this at the date or individual level
+            #mecdict = mecreq.json()
 
-        tdate = mecdict['meta']['mec_date']['start']['date']
-        thour = mecdict['meta']['mec_date']['start']['hour']
-        tmins = mecdict['meta']['mec_date']['start']['minutes']
-        tampm = mecdict['meta']['mec_date']['start']['ampm']
+            #tdate = y['meta']['mec_date']['start']['date']
+            #thour = y['meta']['mec_date']['start']['hour']
+            #tmins = y['meta']['mec_date']['start']['minutes']
+            #tampm = y['meta']['mec_date']['start']['ampm']
 
-        # get a date object
-        prdate = mectodate(tdate, int(thour), int(tmins), tampm)
-        #print (prdate, tnow, forecastLimit)
-        if (prdate > tnow):
-            if (prdate < forecastLimit):
-                events[2] = events[1]
-                events[1] = events[0]
-                events[0] = mecdict
+            #stitle = y["data"]["title"]
+            #scontent = y["data"]["content"]
+
+            tdate = y["data"]["meta"]["mec_start_date"]
+            thour = y["data"]["meta"]["mec_start_time_hour"]
+            tmins = y["data"]["meta"]["mec_start_time_minutes"]
+            tampm = y["data"]["meta"]["mec_start_time_ampm"]
+
+            # get a date object
+            prdate = mectodate(tdate, int(thour), int(tmins), tampm)
+            #print (prdate, tnow, forecastLimit)
+            #if (prdate > tnow):
+            if (prdate <= forecastLimit and eventCnt < 4):
+                #events[3] = events[2]
+                #events[2] = events[1]
+                #events[1] = events[0]
+                events[eventCnt] = y["data"]
 
                 eventCnt = eventCnt + 1
+        # end data
+    # end entries
 
-                #print ("found event", eventCnt)
-
-                #events[0] = events[1]
-                #events[1] = events[2]
-                #events[2] = mecdict
-        else:
-            break
-
-    # end for
-
-    return eventCnt # the 3 events we've found
+    return eventCnt # the 0-4 events we've found
 # end of loadEvents
 
 timeseries = ""
@@ -278,7 +281,7 @@ else:
     print ("We have {} races coming up:\n".format(cnt))
     races = "We have {} races coming up:\n\n".format(cnt)
 
-for x in range(cnt):
+for x in range(cnt): # for the 0-4 races ...
     #print (raceEvents[x])
     #print ("> ", raceEvents[x]['ID'], " ",
         #raceEvents[x]['post']['post_title'], " ",
@@ -287,10 +290,14 @@ for x in range(cnt):
         #raceEvents[x]['meta']['mec_date']['start']['minutes'], " ",
         #raceEvents[x]['meta']['mec_date']['start']['ampm'])
 
-    tdate = raceEvents[x]['meta']['mec_date']['start']['date']
-    thour = raceEvents[x]['meta']['mec_date']['start']['hour']
-    tmins = raceEvents[x]['meta']['mec_date']['start']['minutes']
-    tampm = raceEvents[x]['meta']['mec_date']['start']['ampm']
+    #tdate = raceEvents[x]['meta']['mec_date']['start']['date']
+    #thour = raceEvents[x]['meta']['mec_date']['start']['hour']
+    #tmins = raceEvents[x]['meta']['mec_date']['start']['minutes']
+    #tampm = raceEvents[x]['meta']['mec_date']['start']['ampm']
+    tdate = raceEvents[x]["meta"]["mec_start_date"]
+    thour = raceEvents[x]["meta"]["mec_start_time_hour"]
+    tmins = raceEvents[x]["meta"]["mec_start_time_minutes"]
+    tampm = raceEvents[x]["meta"]["mec_start_time_ampm"]
 
     # get a date object
     prdate = mectodate(tdate, int(thour), int(tmins), tampm)
@@ -309,9 +316,9 @@ for x in range(cnt):
     econtent = raceEvents[x]['content']
     #etitle = mecevents[x]['post']['post_title']
     cleantext = BeautifulSoup(econtent, "lxml").text
-    cleantext = cleantext[0:-1]
+    cleantext = cleantext[0:-1] # remove '\n'
 
-    raceTitle = raceEvents[x]['post']['post_title']
+    raceTitle = raceEvents[x]['title']
     windSpeed = round(tentry['windSpeed10m'] * 1.943844, 1)
     windGust = round(tentry['windGustSpeed10m'] * 1.943844, 1)
     windNo = int(tentry['windDirectionFrom10m'])
@@ -327,7 +334,7 @@ for x in range(cnt):
         print ('')
         races = races + "\n"
     #print (f'{raceTitle}, {prdate:%a %d %b @ %H:%M}')
-    print ("{}, {:%a %d %b @ %H:%M}\n".format(raceTitle, prdate))
+    print ("{}, {:%a %d %b @ %H:%M}".format(raceTitle, prdate))
     print ('{}'.format(cleantext))
     #print (f'Wind {windDirect} ({windNo}), {windSpeed} kts, gusting {windGust} kts')
     print ("Wind {} ({}), {} kts, gusting {} kts".format(windDirect, windNo, windSpeed, windGust))
@@ -352,4 +359,4 @@ sendRaces(races)
 #significantWeatherCode 7
 
 
-# end
+# end of file
