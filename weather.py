@@ -1,6 +1,30 @@
 #
-# code for pyown
+# code for pyown - get weather observations for london
 #
+#
+# Distributed under MIT License
+# 
+# Copyright (c) 2020 Greg Brougham
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+
 
 import os
 import sys
@@ -25,24 +49,24 @@ location_code = 2643741
 
 
 # mapping to images
-weather_icon_dict = {200 : "6", 201 : "6", 202 : "6", 210 : "6", 211 : "6", 212 : "6", 
-                     221 : "6", 230 : "6" , 231 : "6", 232 : "6", 
+weather_icon_dict = {
+        200 : "6", 201 : "6", 202 : "6", 210 : "6", 211 : "6", 212 : "6", 
+        221 : "6", 230 : "6" , 231 : "6", 232 : "6", 
 
-                     300 : "7", 301 : "7", 302 : "8", 310 : "7", 311 : "8", 312 : "8",
-                     313 : "8", 314 : "8", 321 : "8", 
+        300 : "7", 301 : "7", 302 : "8", 310 : "7", 311 : "8", 312 : "8",
+        313 : "8", 314 : "8", 321 : "8", 
  
-                     500 : "7", 501 : "7", 502 : "8", 503 : "8", 504 : "8", 511 : "8", 
-                     520 : "7", 521 : "7", 522 : "8", 531 : "8",
+        500 : "7", 501 : "7", 502 : "8", 503 : "8", 504 : "8", 511 : "8", 
+        520 : "7", 521 : "7", 522 : "8", 531 : "8",
 
-                     600 : "V", 601 : "V", 602 : "W", 611 : "X", 612 : "X", 613 : "X",
-                     615 : "V", 616 : "V", 620 : "V", 621 : "W", 622 : "W", 
+        600 : "V", 601 : "V", 602 : "W", 611 : "X", 612 : "X", 613 : "X",
+        615 : "V", 616 : "V", 620 : "V", 621 : "W", 622 : "W", 
 
-                     701 : "M", 711 : "M", 721 : "M", 731 : "M", 741 : "M", 751 : "M",
-                     761 : "M", 762 : "M", 771 : "M", 781 : "M", 
+        701 : "M", 711 : "M", 721 : "M", 731 : "M", 741 : "M", 751 : "M",
+        761 : "M", 762 : "M", 771 : "M", 781 : "M", 
 
-                     800 : "1", 
-
-                     801 : "H", 802 : "N", 803 : "N", 804 : "Y"
+        800 : "1", 
+        801 : "H", 802 : "N", 803 : "N", 804 : "Y"
 }
 
 
@@ -82,3 +106,4 @@ print("sunrise: " + time.strftime( '%H:%M', time.localtime(sunrise)))
 print("sunset: " + time.strftime( '%H:%M', time.localtime(sunset)))
 
 exit 
+# end of file
