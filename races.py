@@ -33,6 +33,7 @@
 
 # imports
 import os   # for environ()
+import sys, getopt
 import requests
 import geojson  # the structure for the data
 import http.client  # redundant as using requests
@@ -174,7 +175,12 @@ def loadEvents ():
 
     # increased to 15 with feb/mar loaded
     #reqstr = eventsurl + "?per_page=15&order=desc"
-    req = requests.get(mecurl)
+    try:
+        req = requests.get(mecurl)
+    except Exception as e:
+        print ("Error on requests():", sys.exc_info()[0])
+        return eventCnt
+
     if (req.status_code != 200):
         logging.error("events return not 200")
         return eventCnt
@@ -243,6 +249,7 @@ def timeIndex(rdate):
 
 # end timeIndex
 
+unixOptions = "m" # allow '-m' for no email to support testing
 
 # main section
 #
@@ -253,6 +260,15 @@ met_key = os.environ.get('MET_KEY')
 if (met_id == "" or met_key == ""):
     print ("Please set MET_ID and MET_KEY")
     exit(1)
+
+# parse command line
+noMail = False
+fullArgs = sys.argv
+argList = fullArgs[1:]
+args, values = getopt.getopt(argList, "m", "mail")
+for currArg, currVal in args:
+    if (currArg == "-m"):
+        noMail = True
 
 meturl = "https://api-metoffice.apiconnect.ibmcloud.com"
 conn = http.client.HTTPSConnection("api-metoffice.apiconnect.ibmcloud.com")
@@ -268,8 +284,12 @@ metreq = "/metoffice/production/v0/forecasts/point/three-hourly?excludeParameter
 #metreq = "/metoffice/production/v0/forecasts/point/hourly?excludeParameterMetadata=false&includeLocationName=false&latitude=51.469&longitude=-0.2199"
 
 # use requests to retrieve the forecast
-req = requests.get(meturl + metreq, headers=headers)
-#print (req.status_code)
+try:
+    req = requests.get(meturl + metreq, headers=headers)
+except Exception as e:
+    print ("Error on requests():", sys.exc_info()[0])
+    exit(1)
+
 if (req.status_code != 200):
     print ("Error getting forecasts")
     exit (1)
@@ -372,7 +392,10 @@ for x in range(cnt): # for the 0-4 races ...
     races = races + " and it will be {}, temperature {}C, with {}% probability of rain\n".format(signW, feelsLike, probOfPrec)
     # now dispaly the races
 
-sendRaces(races)
+if (noMail == False): # email by default
+    sendRaces(races)
+else:
+    print ("No email sent")
 
 
 # we need to step thru the timeseries and find the entry for the race date/time

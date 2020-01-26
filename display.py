@@ -105,17 +105,17 @@ def mectodate(date, hour, mins, ampm):
 # loadWind from website - ignore if connectivity error
 def loadWind ():
     try:
-        r = requests.get(windurl, allow_redirects=True)
-        open('./tmp/daywind-copy.png', 'wb').write(r.content)
+        rs = requests.get(windurl, allow_redirects=True)
+        open('./tmp/daywind-copy.png', 'wb').write(rs.content)
     except Exception as e:
-        logging.error("loadWind(): daywind ",  rs.status_code)
+        logging.error("loadWind(): daywind",  sys.exc_info()[0])
         return
 
     try:
-        r2 = requests.get(winddirurl, allow_redirects=True)
-        open('./tmp/daywinddir-copy.png', 'wb').write(r2.content)
+        rs2 = requests.get(winddirurl, allow_redirects=True)
+        open('./tmp/daywinddir-copy.png', 'wb').write(rs2.content)
     except Exception as e:
-        logging.error("loadWind(): daywinddir ",  rs.status_code)
+        logging.error("loadWind(): daywinddir",  sys.exc_info()[0])
         return
 
     file_in = "./tmp/daywind"
@@ -351,6 +351,7 @@ def getObs(location):
     # APIResponseError, which bases all of 4xx HTTP errors
     # ParseResponseError, which is raised upon impossibility to parse the JSON payload of API responses
     # end
+
 #
 # load predictions from the met office datahub
 #
