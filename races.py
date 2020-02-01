@@ -46,6 +46,11 @@ from bs4 import BeautifulSoup
 # for email
 import smtplib
 from email.mime.text import MIMEText
+import dutymand
+from creds import *
+
+# will be the duties list
+duties = []
 
 # for met office significant weather
 Weather = [
@@ -249,6 +254,22 @@ def timeIndex(rdate):
 
 # end timeIndex
 
+
+# return the list of duties for a date
+def dutyList(ddate):
+
+    dlist = "Duties: "
+    dlen = len(dlist)
+    for duty in duties:
+        ##print (ddate, duty['date'])
+        if (ddate == duty['date']):
+            if (len(dlist) > dlen):
+                dlist = dlist + ". "
+            dlist = dlist + duty['duty'] + ", " + duty['person']
+
+    return dlist
+# end dutyList
+
 unixOptions = "m" # allow '-m' for no email to support testing
 
 # main section
@@ -269,6 +290,10 @@ args, values = getopt.getopt(argList, "m", "mail")
 for currArg, currVal in args:
     if (currArg == "-m"):
         noMail = True
+
+# initialise the dutyman & get the duties list - add rosterid?
+dutyman = dutymand.DutyMan()
+duties = dutyman.getDuties(RosterId)
 
 meturl = "https://api-metoffice.apiconnect.ibmcloud.com"
 conn = http.client.HTTPSConnection("api-metoffice.apiconnect.ibmcloud.com")
@@ -344,6 +369,10 @@ for x in range(cnt): # for the 0-4 races ...
     # get a date object
     prdate = mectodate(tdate, int(thour), int(tmins), tampm)
 
+    # get the tide
+    # if (hr < 12 and tampm == "PM"): hr = hr + 12
+    # type, time, hieght = gettide(date, hr, mins)
+
     # This is the event time
     #raceStart = "2020-01-12T14:30"
     #evdate = parser.isoparse(raceStart)
@@ -351,9 +380,13 @@ for x in range(cnt): # for the 0-4 races ...
 
     #print (raceStart)
 
-    # get the timeseies entry for the weather
+    # get the timeseries entry for the weather
     tentry = timeIndex(raceStart)
     #print (tentry['time'])
+
+    # and the list of duties
+    dutylist = dutyList(tdate) # isodate
+    #print (dutylist)
 
     econtent = raceEvents[x]['content']
     #etitle = mecevents[x]['post']['post_title']
@@ -380,6 +413,7 @@ for x in range(cnt): # for the 0-4 races ...
     #print (f'{raceTitle}, {prdate:%a %d %b @ %H:%M}')
     print ("{}, {:%a %d %b @ %H:%M}".format(raceTitle, prdate))
     print ('{}'.format(cleantext))
+    print ('{}'.format(dutylist))
     #print (f'Wind {windDirect} ({windNo}), {windSpeed} kts, gusting {windGust} kts')
     print ("Wind {} ({}), {} kts, gusting {} kts".format(windDirect, windNo, windSpeed, windGust))
     #print (f'and {signW}, temperature {feelsLike}C, with {probOfPrec}% probability of rain')
@@ -388,6 +422,7 @@ for x in range(cnt): # for the 0-4 races ...
     #races = races + "We have {1} races coming up:\n\n".format(cnt)
     races = races + "{}, {:%a %d %b @ %H:%M}\n".format(raceTitle, prdate)
     races = races + cleantext + "\n"
+    races = races + dutylist + "\n"
     races = races + "Wind {} ({}), {} kts, gusting {} kts".format(windDirect, windNo, windSpeed, windGust)
     races = races + " and it will be {}, temperature {}C, with {}% probability of rain\n".format(signW, feelsLike, probOfPrec)
     # now dispaly the races
