@@ -37,7 +37,9 @@ import sys, getopt
 import requests
 import geojson  # the structure for the data
 import http.client  # redundant as using requests
-import datetime
+#import datetime
+from datetime import datetime, timezone
+from lxml import html
 #from datetime import date
 import dateutil.relativedelta
 from dateutil import parser
@@ -46,11 +48,9 @@ from bs4 import BeautifulSoup
 # for email
 import smtplib
 from email.mime.text import MIMEText
-import dutymand
+import dutymand # for getDuties and dutyList
 from creds import *
 
-# will be the duties list
-duties = []
 
 # for met office significant weather
 Weather = [
@@ -114,7 +114,8 @@ def sendRaces(races):
     g_mail_recipent = 'racing@ranelaghsc.co.uk'
     fromaddr = 'ranelaghscapp@gmail.com'
     subject = "Forthcoming club races"
-    raceday = datetime.datetime.now().strftime("%d %b %Y")
+    raceday = datetime.now().strftime("%d %b %Y")
+    #raceday = datetime.datetime.now().strftime("%d %b %Y")
 
     # Credentials (to parameterise and inject)
     username = 'ranelaghscapp@gmail.com'
@@ -167,7 +168,8 @@ def loadEvents ():
 
     eventCnt = 0
     # note the current date & calc yesterday
-    tnow = datetime.datetime.now()
+    tnow = datetime.now()
+    #tnow = datetime.datetime.now()
     # days = 6.5 is probably a sensible limit
     forecastLimit = tnow + dateutil.relativedelta.relativedelta(days=6.5)
     #forecastLimit = tnow + dateutil.relativedelta.relativedelta(days=6.8)
@@ -254,21 +256,64 @@ def timeIndex(rdate):
 
 # end timeIndex
 
+def removeNonAscii(s): return "".join(i for i in s if (ord(i)<128 and ord(i)>31))
 
-# return the list of duties for a date
-def dutyList(ddate):
+#tidelist = []
+tideurl = "http://thamestides.org.uk/dailytides2.php?statcode=PUT&startdate="
 
-    dlist = "Duties: "
-    dlen = len(dlist)
-    for duty in duties:
-        ##print (ddate, duty['date'])
-        if (ddate == duty['date']):
-            if (len(dlist) > dlen):
-                dlist = dlist + ". "
-            dlist = dlist + duty['duty'] + ", " + duty['person']
+def getTides(tdate):
+    # build the url and get the entry
 
-    return dlist
-# end dutyList
+    dt = datetime.fromisoformat(tdate)
+    sdate = str(int(dt.replace(tzinfo=timezone.utc).timestamp()))
+    #print(sdate)
+
+    tidelist = [] # truncate
+    dayurl = tideurl + sdate
+
+    page = requests.get(dayurl) # get the day entry
+    if (page.status_code != 200):
+        print ("Error on dayurl")
+
+    tree = html.fromstring(page.content)
+
+    """
+    items = []
+    #print (len(items))
+    if (len(items) == 0): # then initialise
+        for j in range(4, 4 + 5): # should be 4 - 8
+            column = []
+            for i in range(1,6):
+                column.append("")
+            items.append(column)
+    # now initialised
+    #print (len(items))
+    """
+
+    entry = ["", "", "", "", ""] # array of 5 items
+    # now parse the table into the array - note doesn't error
+    for row in range (4, 4 + 5):
+        for col in range(1,6):
+            # returns list
+            item = tree.xpath('//table[@class="first"]//tr['
+                        + str(row) + ']//td[' + str(col) + ']//text()')
+            if (len(item) > 0):
+                #items[row-4][col-1] = item[0]
+                #items[row-4][col-1] = removeNonAscii(item[0])
+                entry[col-1] = removeNonAscii(item[0])
+            else:
+                #items[row-4][col-1] = ""
+                entry[col-1] = ""
+            #print ("items ", str(row), str(col), items[row-4][col-1])
+
+        # for
+        tide = {'type': str(entry[0]), 'time': entry[1], 'height': entry[2]}
+        tidelist.append(tide)
+    # for
+
+    return tidelist
+# end getTides()
+
 
 unixOptions = "m" # allow '-m' for no email to support testing
 
@@ -369,9 +414,26 @@ for x in range(cnt): # for the 0-4 races ...
     # get a date object
     prdate = mectodate(tdate, int(thour), int(tmins), tampm)
 
-    # get the tide
-    # if (hr < 12 and tampm == "PM"): hr = hr + 12
+    hr = int(thour)
+    if (hr < 12 and tampm == "PM"): hr = hr + 12
+    #rtime = str("{}:{}".format(hr, int(tmins)
+    rtime = "{:02d}:{:02d}".format(int(hr), int(tmins))
     # type, time, hieght = gettide(date, hr, mins)
+
+    tides = getTides(tdate) # "YYYY-MM-DD"
+
+    #print (rtime)
+    tnote = ""
+    for tide in tides:
+        if (tide['time'] > rtime):
+            ttype = tide['type']
+            ttime = tide['time']
+            theight = tide['height']
+            if (float(theight) >= 7.0):
+                tnote = " water will be across the road"
+            break
+
+    #print (tide, ttype, ttime, theight)
 
     # This is the event time
     #raceStart = "2020-01-12T14:30"
@@ -385,7 +447,7 @@ for x in range(cnt): # for the 0-4 races ...
     #print (tentry['time'])
 
     # and the list of duties
-    dutylist = dutyList(tdate) # isodate
+    dutylist = dutyman.dutyList(tdate) # isodate
     #print (dutylist)
 
     econtent = raceEvents[x]['content']
@@ -412,8 +474,9 @@ for x in range(cnt): # for the 0-4 races ...
         races = races + "\n"
     #print (f'{raceTitle}, {prdate:%a %d %b @ %H:%M}')
     print ("{}, {:%a %d %b @ %H:%M}".format(raceTitle, prdate))
-    print ('{}'.format(cleantext))
+    #print ('{}'.format(cleantext))
     print ('{}'.format(dutylist))
+    print ("Tide " + tide['type'] + " at " + tide['time'] + ", height " + tide['height'])
     #print (f'Wind {windDirect} ({windNo}), {windSpeed} kts, gusting {windGust} kts')
     print ("Wind {} ({}), {} kts, gusting {} kts".format(windDirect, windNo, windSpeed, windGust))
     #print (f'and {signW}, temperature {feelsLike}C, with {probOfPrec}% probability of rain')
@@ -421,8 +484,10 @@ for x in range(cnt): # for the 0-4 races ...
 
     #races = races + "We have {1} races coming up:\n\n".format(cnt)
     races = races + "{}, {:%a %d %b @ %H:%M}\n".format(raceTitle, prdate)
-    races = races + cleantext + "\n"
+    #races = races + cleantext + "\n"
     races = races + dutylist + "\n"
+    races = races + "Tide " + tide['type'] + " at " + \
+                            tide['time'] + ", height " + tide['height']
     races = races + "Wind {} ({}), {} kts, gusting {} kts".format(windDirect, windNo, windSpeed, windGust)
     races = races + " and it will be {}, temperature {}C, with {}% probability of rain\n".format(signW, feelsLike, probOfPrec)
     # now dispaly the races

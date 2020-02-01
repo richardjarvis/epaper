@@ -58,7 +58,24 @@ class DutyMan:
         self.roster_id = roster_id
         self.db_password = db_password
         self.use_wsdl = use_wsdl
+
+        self.duties = []
     # end __init__
+
+    # return the list of duties for a date
+    def dutyList(self, ddate):
+
+        dlist = "Duties: "
+        dlen = len(dlist)
+        for duty in self.duties:
+            ##print (ddate, duty['date'])
+            if (ddate == duty['date']):
+                if (len(dlist) > dlen):
+                    dlist = dlist + ". "
+                dlist = dlist + duty['duty'] + ", " + duty['person']
+
+        return dlist
+    # end dutyList
 
 
     def getDuties(self, roster_id, max_duties=9999, max_events=9999):
@@ -68,13 +85,14 @@ class DutyMan:
             roster_id {str} -- Roster ID (Member ID)
 
         Keyword Arguments:
-            max_duties {number} -- max number of duties to return (default: {9999})
-            max_events {number} -- max number of events to return (default: {9999})
+        max_duties {number} -- max number of duties to return (default: {9999})
+        max_events {number} -- max number of events to return (default: {9999})
 
         Returns:
             array of dictionaries -- duties
         '''
-        duties = []
+
+        self.duties = [] # truncate in case called twice
         parsered = URLParser(f'https://dutyman.biz/dmembed.aspx?id=R0001532&mode=2&maxrows={max_duties}')
         rows = parsered.tree.xpath('//tr')
         n_events = 0
@@ -101,22 +119,18 @@ class DutyMan:
                 #edate = tnow.date()
                 if (date == "Today"):
                     dateobj = tnow
-                    #edate = dateobj.date()
                 elif (date == "Tomorrow"):
-                    dateojb = tnow + dateutil.relativedelta.relativedelta(days=1)
-                    #edate = dateobj.date()
+                    dateobj = tnow + dateutil.relativedelta.relativedelta(days=1)
                 else:
                     dateobj = parser.parse(date)
-                    #edate = dateobj.date()
 
                 edate = dateobj.date()
 
-
                 person = xperson[0].strip()
                 duty = {'date': str(edate), 'event': event, 'duty': duty_name, 'person': person}
-                duties.append(duty)
+                self.duties.append(duty)
 
-        return duties
+        return self.duties
 
     def getEvents(self, roster_id, max_duties=9999, max_events=9999):
         ''' Get events
@@ -125,8 +139,8 @@ class DutyMan:
             roster_id {str} -- Roster ID (Member ID)
 
         Keyword Arguments:
-            max_duties {number} -- max number of duties to return (default: {9999})
-            max_events {number} -- max number of events to return (default: {9999})
+        max_duties {number} -- max number of duties to return (default: {9999})
+        max_events {number} -- max number of events to return (default: {9999})
 
         Returns:
             array of dictionaries -- events
