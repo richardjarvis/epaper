@@ -487,7 +487,7 @@ for x in range(cnt): # for the 0-4 races ...
     #races = races + cleantext + "\n"
     races = races + dutylist + "\n"
     races = races + "Tide " + tide['type'] + " at " + \
-                            tide['time'] + ", height " + tide['height']
+                            tide['time'] + ", height " + tide['height'] + "\n"
     races = races + "Wind {} ({}), {} kts, gusting {} kts".format(windDirect, windNo, windSpeed, windGust)
     races = races + " and it will be {}, temperature {}C, with {}% probability of rain\n".format(signW, feelsLike, probOfPrec)
     # now dispaly the races
