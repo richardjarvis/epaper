@@ -39,6 +39,10 @@ import geojson  # the structure for the data
 import http.client  # redundant as using requests
 #import datetime
 from datetime import datetime, timezone
+# following needs backports-datetime-fromisofromat to be intalled on 3.5
+if sys.version_info < (3, 6):
+    from backports.datetime_fromisoformat import MonkeyPatch
+    MonkeyPatch.patch_fromisoformat()
 from lxml import html
 #from datetime import date
 import dateutil.relativedelta
@@ -361,7 +365,7 @@ except Exception as e:
     exit(1)
 
 if (req.status_code != 200):
-    print ("Error getting forecasts")
+    print ("Error getting forecasts", req.status_code)
     exit (1)
 
 #print (req.json())

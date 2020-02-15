@@ -25,7 +25,7 @@ class URLParser:
         self.url = url
         self.tree = self.download_page(url)
         if self.tree is None:
-            raise Exception(f"Could not download the page ({url})")
+            raise Exception("Could not download the page ({})".format(url))
 
     def download_page(self, url):
         headers = {
@@ -93,7 +93,7 @@ class DutyMan:
         '''
 
         self.duties = [] # truncate in case called twice
-        parsered = URLParser(f'https://dutyman.biz/dmembed.aspx?id=R0001532&mode=2&maxrows={max_duties}')
+        parsered = URLParser('https://dutyman.biz/dmembed.aspx?id=R0001532&mode=2&maxrows={}'.format(max_duties))
         rows = parsered.tree.xpath('//tr')
         n_events = 0
         for row in rows:
