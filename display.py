@@ -352,7 +352,7 @@ def getObs(location):
         oldObs = obs # note in case of error
         return(oldObs)
 
-    except Exeption as e:
+    except Exception as e:
         return(oldObs)
 
     # APICallError, which bases all of the network/infrastructural issue-related errors
@@ -639,7 +639,7 @@ try:
             # denormalise and parse to python date
             prdate = mectodate(estart_date, int(estart_hour), int(estart_mins), estart_ampm)
             #prdate = parser.isoparse(estart)
-            imgtext = prdate.strftime('%d %b %Y %H:%M') + " - " + etitle
+            imgtext = prdate.strftime('%a %d %b %Y %H:%M') + " - " + etitle
 
             # add 2 pixels - leading is ????
             txt = " > " + cleantext[0:65]
