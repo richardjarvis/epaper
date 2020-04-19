@@ -265,6 +265,7 @@ def removeNonAscii(s): return "".join(i for i in s if (ord(i)<128 and ord(i)>31)
 #tidelist = []
 tideurl = "http://thamestides.org.uk/dailytides2.php?statcode=PUT&startdate="
 
+# get the tides for the given date
 def getTides(tdate):
     # build the url and get the entry
 
@@ -339,6 +340,28 @@ args, values = getopt.getopt(argList, "m", "mail")
 for currArg, currVal in args:
     if (currArg == "-m"):
         noMail = True
+
+
+# xxx
+# get flood dates for the next week
+floods = [] # truncate
+for day in [1, 2, 3, 4, 5 , 6, 7]:
+    fdate = datetime.now() + dateutil.relativedelta.relativedelta(days=day)
+    tdate = fdate.strftime("%Y-%m-%d")
+    #print (day, tdate, fdate)
+
+    tides = getTides(tdate) # "YYYY-MM-DD"
+    #print (tides)
+    for tide in tides:
+        theight = tide['height']
+        #print (" > ", theight)
+        if (len(theight) > 1 and float(theight) >= 6.9):
+            #print ("Flood ", theight)
+            flood = {'date': fdate, 'time': tide['time'], 'height': theight}
+            floods.append(flood)
+        #     append floods
+    # end tides
+# end for
 
 # initialise the dutyman & get the duties list - add rosterid?
 dutyman = dutymand.DutyMan()
@@ -494,7 +517,21 @@ for x in range(cnt): # for the 0-4 races ...
                             tide['time'] + ", height " + tide['height'] + "\n"
     races = races + "Wind {} ({}), {} kts, gusting {} kts".format(windDirect, windNo, windSpeed, windGust)
     races = races + " and it will be {}, temperature {}C, with {}% probability of rain\n".format(signW, feelsLike, probOfPrec)
-    # now dispaly the races
+    # end dispaly the races
+
+# add tide heights if > 6.9m when flooding is likely
+fmsg = "The club is likely to flood on the following tides:"
+if len(floods) > 0:
+    print(fmsg)
+    races = races + fmsg + "\n"
+    for flood in floods:
+        # {'type': tide['type'], 'time': tide['time'], 'height': theight}
+        tdate = flood['date'].strftime("%a %d %b %Y")
+        tstr = "{} @ {} ({})".format(tdate, flood['time'], flood['height'])
+        print (tstr)
+        races = races + tstr + "\n"
+    # end floods
+# end of if floods
 
 if (noMail == False): # email by default
     sendRaces(races)
