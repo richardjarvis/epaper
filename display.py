@@ -207,8 +207,12 @@ def loadTides():
     norows = 4
     nocols = 5
 
-    tidepage = requests.get(tideurl)
-    tree = html.fromstring(tidepage.content)
+    # added to address latest failure
+    try:
+        tidepage = requests.get(tideurl)
+        tree = html.fromstring(tidepage.content)
+    except Exception as e:
+        return tides
 
     #print (len(tides))
     if (len(tides) == 0): # then initialise
