@@ -55,6 +55,8 @@ from email.mime.text import MIMEText
 import dutymand # for getDuties and dutyList
 from creds import *
 
+FLOODTIDE = 7.0
+
 
 # for met office significant weather
 Weather = [
@@ -355,7 +357,7 @@ for day in [1, 2, 3, 4, 5 , 6, 7]:
     for tide in tides:
         theight = tide['height']
         #print (" > ", theight)
-        if (len(theight) > 1 and float(theight) >= 6.9):
+        if (len(theight) > 1 and float(theight) >= FLOODTIDE):
             #print ("Flood ", theight)
             flood = {'date': fdate, 'time': tide['time'], 'height': theight}
             floods.append(flood)
@@ -522,6 +524,8 @@ for x in range(cnt): # for the 0-4 races ...
 # add tide heights if > 6.9m when flooding is likely
 fmsg = "The club is likely to flood on the following tides:"
 if len(floods) > 0:
+    if (cnt > 0):
+        fmsg = "\n" + fmsg
     print(fmsg)
     races = races + fmsg + "\n"
     for flood in floods:
