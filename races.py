@@ -55,7 +55,7 @@ from email.mime.text import MIMEText
 import dutymand # for getDuties and dutyList
 from creds import *
 
-FLOODTIDE = 7.0
+FLOODTIDE = 7.2
 
 
 # for met office significant weather
@@ -123,9 +123,9 @@ def sendRaces(races):
     raceday = datetime.now().strftime("%d %b %Y")
     #raceday = datetime.datetime.now().strftime("%d %b %Y")
 
-    # Credentials (to parameterise and inject)
-    username = 'ranelaghscapp@gmail.com'
-    password = 'R0nel0ghSC'
+    # Credentials (injected via creds.py)
+    username = eusername
+    password = epassword
 
     msg = MIMEText(races)
 

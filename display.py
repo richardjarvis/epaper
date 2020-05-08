@@ -148,7 +148,12 @@ flowtext = ""
 def eaukFlow():
     global flowtext
 
-    page = requests.get(eauk)
+    try:
+        page = requests.get(eauk)
+    except Exception as e:
+        logging.error("eaukFlow(): requets()",  exc_info=True)
+        return flowtext
+
     if (page.status_code != 200):
         logging.error("eauk return not 200")
         return flowtext
