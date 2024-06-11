@@ -1,4 +1,5 @@
 __pycache__/
+.idea/
 *.log
 epaper.env
 cred*.py
