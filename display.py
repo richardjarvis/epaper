@@ -38,12 +38,14 @@ import os
 
 # need the name of root of the pic and lib directories
 # they also have fonts under fonts under picdir
-picdir = "./epaperws/pic"
 #picdir = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'pic')
-libdir = "./epaperws/lib"
+libdir = "./epaperws/RaspberryPi_JetsonNano/python/lib"
 #libdir = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'lib')
 if os.path.exists(libdir):
     sys.path.append(libdir)
+
+picdir = os.path.join(os.path.dirname(libdir), 'pic')
+fontdir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'fonts')
 
 # used for pyowm install as it is a 'local' install
 #locallib = "/usr/local/lib/python3.7/site-packages"
@@ -423,6 +425,7 @@ weather_icon_dict = {200:"6", 201:"6", 202:"6", 210:"6", 211:"6", 212 : "6",
                      800:"1", 801:"H", 802:"N", 803:"N", 804:"Y" }
 
 # the fonts
+print(picdir)
 font40 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 40)
 font36 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 36)
 font32 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 32)
@@ -430,16 +433,16 @@ font24 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 24)
 font18 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 18)
 font14 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 14)
 
-font36 = ImageFont.truetype('./epaperws/fonts/arial.ttf', 36)
-font28 = ImageFont.truetype('./epaperws/fonts/arial.ttf', 28)
-font24 = ImageFont.truetype('./epaperws/fonts/arial.ttf', 24)
-font20 = ImageFont.truetype('./epaperws/fonts/arial.ttf', 20)
-font16 = ImageFont.truetype('./epaperws/fonts/arial.ttf', 16)
+arial_path = os.path.join(fontdir, 'arial.ttf')
+font36 = ImageFont.truetype(arial_path, 36)
+font28 = ImageFont.truetype(arial_path, 28)
+font24 = ImageFont.truetype(arial_path, 24)
+font20 = ImageFont.truetype(arial_path, 20)
+font16 = ImageFont.truetype(arial_path, 16)
 # overwrite the 14 font
-font14 = ImageFont.truetype('./epaperws/fonts/arial.ttf', 14)
-fontweather = ImageFont.truetype('./epaperws/fonts/meteocons-webfont.ttf', 30)
-fontweatherbig = ImageFont.truetype('./epaperws/fonts/meteocons-webfont.ttf', 60)
-
+font14 = ImageFont.truetype(arial_path, 14)
+fontweather = ImageFont.truetype(meteocons_path, 30)
+fontweatherbig = ImageFont.truetype(meteocons_path, 60)
 
 #
 # retrieve the access keys from the environment

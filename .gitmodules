@@ -1,0 +1,3 @@
+[submodule "epaperws"]
+	path = epaperws
+	url = ./epaperws

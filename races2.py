@@ -117,7 +117,8 @@ def windDir(dir):
 def sendRaces(races):
     #
     #g_mail_recipient = 'integ@ranelaghsc.co.uk'
-    g_mail_recipient = 'racing@ranelaghsc.co.uk'
+    #g_mail_recipient = 'racing@ranelaghsc.co.uk'
+    g_mail_recipient = 'richard.a.jarvis@googlemail.com'
     fromaddr = 'ranelaghscapp@gmail.com'
     subject = "Forthcoming club races"
     raceday = datetime.now().strftime("%d %b %Y")
